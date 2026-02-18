@@ -16,7 +16,7 @@ Lorsqu'on lance le logiciel `multiple_files`, le logiciel tourne à l'infini. Le
 second.h s'incluent mutuellement, ce qui continue de créer des appels. On peut contrer cela en mettant nos fichiers
 sous la forme suivante.
 
-```c 
+```c++
 #ifndef MY_HEAD_H
 #define MY_HEAD_H
 
@@ -65,7 +65,7 @@ S'il s'agissait d'un tableau statique, cela ne changerait rien.
 
 #### Compilation 32-bit
 
-```c
+```shell
 gcc -m32 sizeof_test.c -o sizeof_test -Wall
 ```
 
@@ -84,7 +84,9 @@ Fait.
 
 ### Exercice 5
 
-```c 
+#### Stockage via struct
+
+```c++
 struct a {
     int b;
     char c;
@@ -93,7 +95,7 @@ struct a {
 
 Définition d'un struct nommé `a`. On peut donc écrire `struct a a1;`.
 
-```c 
+```c++
 struct {
     int b;
     char c;
@@ -102,10 +104,85 @@ struct {
 
 Définition d'un struct anonyme avec une variable nommée `a`.
 
+#### Mémoire utilisée
+
+La mémoire utilisée dans les deux cas est de 8 bytes. En effet, nous avons un membre de 4 bytes et un autre de 1 byte.
+L'alignement se fera donc à 4 bytes. Nous avons donc 3 bytes de padding à la fin.
+
 ### Exercice 6
 
+#### Recherche dans le kernel linux
+
 ```shell
-git grep __attribute__
+git grep -h "__attribute__" | sort | uniq
 ```
 
-On découvre qu'il y a diverses options d'alignement avec __attribute__.
+En faisant des recherches extensives sur internet, on découvre que \_\_attribute__ fait partie d'une extension en GCC.
+
+J'ai personnellement réussi à trouver ces diverses options.
+
+```c++
+__attribute__((packed))
+__attribute__((aligned(8))) // 16, 
+__attribute__((format(printf, 1, 2)))
+__attribute__((preserve_access_index))
+__attribute__((weak))
+__attribute__((noinline))
+__attribute__((unused))
+__attribute__((common))
+__attribute__((noreturn))
+__attribute__((section("sec")))
+__attribute__((long_call))
+__attribute__((always_inline))
+__attribute__((syscall_linkage))
+__attribute__((cold))
+__attribute__((pure))
+__attribute__((const))
+```
+
+#### Résumé
+
+On peut s'aider du site internet [gcc](https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html).
+
+Voici une explication de certaines de ces fonctions.
+
+- aligned(*alignment*) - minimum alignment for the first instruction of the function
+- format(*archetype*, *string-index*, *first-to-check*) - function takes printf, scanf, strftime or strfmon style
+arguments that are checked against a format string. string-index specifies which argument is the format string argument
+  (starting 1) and first-to-check is the number of the first argument to check against the format string
+- cold - function is unlikely to be executed (optimized for size rather than speed)
+- noreturn - abort/exit cannot return, function will then never return
+- const - different calls with same arguments will always give same results, independently of program state
+- unused - function is possibly unused so GCC does not produce any warning for it
+- pure - function depends on only its arguments and the global memory, less restrictive than const
+
+### Exercice 7
+
+L'alignement des champs suit l'alignement du membre le plus grand en bytes. En effet, avec une structure comme celle-ci.
+
+```c++
+struct /*__attribute__(packed)*/ Car {
+    short nb_wheels;
+    double length;
+    char name[50];
+};
+```
+
+On a le tableau récapitulatif suivant.
+
+| Membre    | Offset | `__attribute__(packed)` |
+|-----------|--------|-------------------------|
+| nb_wheels | 0      | 0                       |
+| length    | 8      | 2                       |
+| name      | 16     | 10                      |
+
+Cela vient du fait qu'un double fait 8 bytes et donc l'alignement se faire sur 8 bytes. On obtient d'ailleurs comme
+taille de structure 72 alors que 16 + 50 = 66. Là encore, l'alignement a été augmenté jusqu'à 72 pour être un multiple
+de 8 bytes.
+
+En ajoutant `__attribute__(packed)`, on obtient des adresses qui ont plus de sens et enlève ces trous. Cela étant dit,
+cela baissera également la performance d'accès à la structure qui est une des raisons pour cet alignement "étrange".
+
+Cependant, je n'ai pas eu d'avertissements à l'utilisation de `__attribute__(packed)`.
+
+### Exercice 8

@@ -6,3 +6,5 @@ struct
 main
 oop
 sizeof_test
+container_of
+beefcafe2
