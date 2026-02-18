@@ -186,3 +186,33 @@ cela baissera également la performance d'accès à la structure qui est une des
 Cependant, je n'ai pas eu d'avertissements à l'utilisation de `__attribute__(packed)`.
 
 ### Exercice 8
+
+Fait.
+
+### Exercice 9
+
+```c++
+int main() {
+    volatile int i = 0;
+    if (i)
+        return 1;
+    return 0;
+}
+```
+
+| Volatile | Optimisation | Description                                                        |
+|----------|--------------|--------------------------------------------------------------------|
+| non      | 0            | Aucune optimization                                                |
+| non      | 1            | Simplification en return immédiat                                  |
+| non      | 2            | Simplification en return immédiat                                  |
+| non      | 3            | Simplification en return immédiat                                  |
+| oui      | 0            | Aucune optimization                                                |
+| oui      | 1            | Simplification mais garde test et retourne valeur suivant résultat |
+| oui      | 2            | Simplification mais garde test et retourne valeur suivant résultat |
+| oui      | 3            | Simplification mais garde test et retourne valeur suivant résultat |
+
+Probablement qu'avec une fonction plus compliquée, les niveaux d'optimisations changeraient plus de choses. Dans tous
+les cas, on voit bien que volatile permet même lors d'optimisations de garder la lecture de la valeur au cas où celle-ci
+avait changé.
+
+### Exercice 10

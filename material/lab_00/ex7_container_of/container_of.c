@@ -28,4 +28,6 @@ int main (int argc, char* argv[]) {
     printf("Car container of name (%p) : %s\n", (void *)&(car.name),
         container_of(&(car.name), struct Car, name) == &car ? "true" : "false");
     printf("Registered offset %ld\n\n", offsetof(struct Car, name));
+
+    return EXIT_SUCCESS;
 }
