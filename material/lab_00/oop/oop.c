@@ -139,6 +139,67 @@ struct Shape *Circle_init(int initx, int inity, int initr)
 	return (struct Shape *) obj;
 }
 
+/* Cuboid class */
+struct Cuboid {
+	struct Shape super;
+	int x;
+	int y;
+	int z;
+	int width;
+	int height;
+	int depth;
+};
+
+void Cuboid_printArea(struct Shape *obj) {
+	struct Cuboid *rdata = (struct Cuboid *) obj;
+	int area = rdata->width * rdata->height * rdata->depth;
+	printf("Cuboid volume is %d\n", area);
+}
+
+void Cuboid_moveTo(struct Shape *obj,
+			  int newx,
+			  int newy)
+{
+	struct Cuboid *rdata = (struct Cuboid *) obj;
+	rdata->x = newx;
+	rdata->y = newy;
+	printf("Moving your cuboid to (%d, %d)\n",
+		   rdata->x, rdata->y);
+}
+
+void Cuboid_destroy(struct Shape *obj)
+{
+	Shape_destroy(obj);
+	free(obj);
+}
+
+struct CuboidFuncTable {
+	struct ShapeFuncTable super;
+	void (*setWidth) (struct Shape *obj, int neww);
+} cuboidFuncTable = {
+	{
+		.printArea = Cuboid_printArea,
+		.moveTo = Cuboid_moveTo,
+		.destructor_ = Cuboid_destroy
+	}
+};
+
+struct Shape* Cuboid_init(int initx, int inity, int initz,
+				 int initw, int inith, int initd)
+{
+	struct Cuboid *obj =
+		(struct Cuboid *) malloc(sizeof(struct Cuboid));
+	obj->super.funcTable =
+		(struct ShapeFuncTable *) &cuboidFuncTable;
+	obj->x = initx;
+	obj->y = inity;
+	obj->z = initz;
+	obj->width = initw;
+	obj->height = inith;
+	obj->depth = initd;
+	return (struct Shape *) obj;
+}
+
 #define Shape_PRINTAREA(obj) (((struct Shape *) (obj))->funcTable->printArea((obj)))
 #define Shape_MOVETO(obj, newx, newy)					\
 	(((struct Shape *) (obj))->funcTable->moveTo((obj),(newx), (newy)))
@@ -155,13 +216,14 @@ void handleShape(struct Shape *s) {
 
 int main () {
 	int i;
-	struct Shape *shapes[2];
+	struct Shape *shapes[3];
 	struct Shape *r;
 
 	/* Using shapes polymorphically */
 	shapes[0] = Rectangle_init(20, 12, 123, 321);
 	shapes[1] = Circle_init(21, 12, 2012);
-	for (i = 0; i < 2; ++ i) {
+	shapes[2] = Cuboid_init(22, 12, 12, 123, 321, 321);
+	for (i = 0; i < 3; ++ i) {
 		Shape_PRINTAREA(shapes[i]);
 		handleShape(shapes[i]);
 	}
@@ -170,6 +232,6 @@ int main () {
 	Rectangle_SETWIDTH(r, 5);
 	Shape_PRINTAREA(r);
 	Shape_DESTROY(r);
-	for (i = 1; i >= 0; --i)
+	for (i = 2; i >= 0; --i)
 		Shape_DESTROY(shapes[i]);
 }

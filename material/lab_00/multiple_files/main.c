@@ -3,10 +3,9 @@
 #include "first.h"
 #include "second.h"
 
-int main()
-{
+int main() {
 	printf("I am the main, and I wish to call my assistants %s and %s!\n",
-	       FIRST_NAME, SECOND_NAME);
+	       FIRST_H, SECOND_H);
 	first();
 	second();
 

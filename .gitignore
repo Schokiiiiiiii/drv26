@@ -1,0 +1,8 @@
+*.o
+.idea
+*.exe
+beefcafe
+struct
+main
+oop
+sizeof_test

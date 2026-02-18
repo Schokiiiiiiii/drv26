@@ -4,8 +4,7 @@
 
 char str_out[] = "my nice, quite long string (for sure more than 8 bytes...)";
 
-void print_size(char str_array[])
-{
+void print_size(char *str_array) { // we lose the information on str_array because we give an array otherwise
 	int int_var;
 	float float_var;
 	double double_var;
@@ -26,6 +25,7 @@ void print_size(char str_array[])
 	       sizeof(double_var), sizeof(double),
 	       sizeof(char_var), sizeof(unsigned char),
 	       sizeof(str_ptr), sizeof(char *),
+	       // sizeof(str_array), sizeof(str_out)); // str_array is a pointer, str_out is an array
 	       sizeof(str_array), sizeof(str_out));
 
 	printf("Of course, I can trick the function sizeof() with the appropriate cast...\n"
@@ -50,8 +50,7 @@ void print_size(char str_array[])
 	free(my_array);
 }
 
-int main()
-{
+int main() {
 	print_size(str_out);
 
 	return 0;
