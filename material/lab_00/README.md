@@ -4,7 +4,7 @@
 
 - Auteur: Fabien Léger
 - Cours: DRV, HEIG-VD
-- Date: 16 février 2026
+- Date: 19 février 2026
 
 ## Exercices
 
@@ -216,3 +216,54 @@ les cas, on voit bien que volatile permet même lors d'optimisations de garder l
 avait changé.
 
 ### Exercice 10
+
+```c++
+int main() {
+    uint32_t number = 100;
+    printf("%d\n", number << 42);
+    return EXIT_SUCCESS;
+}
+```
+
+On a un warning de l'IDE et du compilateur.
+
+On peut également ajouter une entrée utilisateur plutôt simple.
+
+```c++
+int main() {
+    uint32_t number = 4;
+    uint32_t shifter = 0;
+    printf("Enter a number for shifter :");
+    if (scanf("%d", &shifter) != 1)
+        return EXIT_FAILURE;
+    printf("%d\n", number << shifter);
+    return EXIT_SUCCESS;
+}
+```
+
+En ajoutant `-fsanitize=undefined`, on a une erreur lors du runtime. En effet, la détection n'est possible que lorsque
+l'entrée utilisateur affecte directement le shift avec une valeur erronée.
+
+On peut également trouver l'ajout de code très intéressant ci-dessous.
+
+```asm
+cmp     ebx, 31
+jbe     .L4
+```
+
+En faisant notre shift, on test la valeur donnée en la comparant à 31. Si notre valeur est plus petite ou égale à 31,
+alors on faut un jump qui nous amène au reste pour ensuite printf(), sinon on continue jusqu'à appeler une fonction
+pour gérer l'exception.
+
+```asm
+mov     edi, OFFSET FLAT:.Lubsan_data0
+call    __ubsan_handle_shift_out_of_bounds
+```
+
+## Conclusion
+
+J'ai beaucoup apprécié ce laboratoire. J'ai un peu eu du mal avec la fonction git grep n'ayant pas les connaissances
+nécessaires pour bien l'utiliser.
+
+Je pense que cela donne un bon rappel du langage C tout en introduisant des concepts d'assembleurs. Spécifiquement,
+l'exercice 10 où on découvre que notre code change avec une option de compilation gcc est génial.
