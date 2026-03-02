@@ -206,12 +206,10 @@ mw.l 0xFF200030 0x6D6D
 On peut donc mettre toute la logique dans des variables pour obtenir cela.
 
 ```shell
-setenv hex0 0x0
-setenv hex5 0x6D
-
-setenv show0 'mw.l 0xFF200020 0x${hex0}; mw.w 0xFF200030 0x${hex0}'
-setenv show5 'mw.l 0xFF200020 0x${hex5}${hex5}${hex5}${hex5}; mw.w 0xFF200030 0x${hex5}${hex5}'
-
+setenv hex0 3F
+setenv hex5 6D
+setenv show0 "mw.l 0xFF200020 0x${hex0}${hex0}${hex0}${hex0}; mw.w 0xFF200030 0x${hex0}${hex0}"
+setenv show5 "mw.l 0xFF200020 0x${hex5}${hex5}${hex5}${hex5}; mw.w 0xFF200030 0x${hex5}${hex5}"
 setenv alt 'while true; do run show0; sleep 1; run show5; sleep 1; done'
 run alt
 ```
