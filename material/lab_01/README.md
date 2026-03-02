@@ -209,9 +209,19 @@ On peut donc mettre toute la logique dans des variables pour obtenir cela.
 setenv hex0 0x0
 setenv hex5 0x6D
 
-setenv show0 'mw.l 0xFF200020 ${hex0}; mw.w 0xFF200030 ${hex0}'
-setenv show5 'mw.l 0xFF200020 ${hex5}${hex5}${hex5}${hex5}; mw.w 0xFF200030 ${hex5}${hex5}'
+setenv show0 'mw.l 0xFF200020 0x${hex0}; mw.w 0xFF200030 0x${hex0}'
+setenv show5 'mw.l 0xFF200020 0x${hex5}${hex5}${hex5}${hex5}; mw.w 0xFF200030 0x${hex5}${hex5}'
 
 setenv alt 'while true; do run show0; sleep 1; run show5; sleep 1; done'
 run alt
 ```
+
+### Exercice 3
+
+Fait.
+
+## Remarques
+
+La DE1-SoC n'a plus marché à cause de mon adaptateur qui ne marchait plus. J'ai quand même essayé de faire au mieux les
+exercices 2 et 3 pour avoir un rendu. Je les testerai en dehors de ce rendu de laboratoire une fois que la connexion
+avec mon PC fonctionnera à nouveau.
