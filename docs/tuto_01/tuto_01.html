@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Flasher la carte SD &#8212; Documentation DRV 2025 </title>
+    <title>Tutoriel 1 --- Prise en main &#8212; Documentation DRV 2025 </title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=e6b791cb"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'helper/flash_sd';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tuto_01/tuto_01';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Recherche" href="../search.html" />
-    <link rel="next" title="Laboratoire 0 --- Consolidation du langage C" href="../lab_00/lab_00.html" />
-    <link rel="prev" title="Helper" href="helper.html" />
+    <link rel="next" title="Laboratoire 2 --- User-space Drivers" href="../lab_02/lab_02.html" />
+    <link rel="prev" title="Laboratoire 1 --- Introduction" href="../lab_01/lab_01.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="fr"/>
   </head>
@@ -157,12 +157,12 @@
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="eval_criterion.html">Consigne de rendu</a></li>
-<li class="toctree-l1"><a class="reference internal" href="helper.html">Helper</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Flasher carte SD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/eval_criterion.html">Consigne de rendu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/helper.html">Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/flash_sd.html">Flasher carte SD</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_00/lab_00.html">Laboratoire 0</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_01/lab_01.html">Laboratoire 1</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tuto_01/tuto_01.html">Tuto 1</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Tuto 1</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_02/lab_02.html">Laboratoire 2</a></li>
 </ul>
 
@@ -218,7 +218,7 @@
       
       
       
-      <li><a href="../_sources/helper/flash_sd.rst" target="_blank"
+      <li><a href="../_sources/tuto_01/tuto_01.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Télécharger le fichier source"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -289,7 +289,9 @@ document.write(`
   </button>
 `);
 </script>
-
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
 </div></div>
       
     </div>
@@ -300,11 +302,19 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Flasher la carte SD</h1>
+    <h1>Tutoriel 1 --- Prise en main</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
+            <div>
+                <h2> Contenu </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drv-adder">DRV-adder</a></li>
+</ul>
+            </nav>
         </div>
     </div>
 </div>
@@ -314,38 +324,204 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="flasher-la-carte-sd">
-<span id="flash-sd"></span><h1>Flasher la carte SD<a class="headerlink" href="#flasher-la-carte-sd" title="Lien vers cette rubrique">#</a></h1>
-<p>Un cas de problème avec l'image de la carte SD, il est possible de la reflasher.</p>
-<p>Pour cela, il faut télécharger l'archive <code class="file docutils literal notranslate"><span class="pre">drv-2026-sdcard.tar.gz</span></code> contenant l'image de la carte SD [disponible <a class="reference external" href="http://reds-data.heig-vd.ch/cours/2026_drv/drv-2026-sdcard.tar.gz">ici</a>]</p>
-<p>Une fois téléchargé l'archive contenant l'image de la carte SD, vous devez identifier le dispositif associé avec le lecteur de cartes avec la commande <strong>dmesg</strong>:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">HOST:~$ </span>dmesg
-<span class="go">...</span>
-<span class="go">130088.305550] sd 6:0:0:1: [sde] 31422464 512-byte logical blocks: (16.1 GB/15.0 GiB)</span>
-<span class="go">[130088.306567] sd 6:0:0:1: [sde] Write Protect is off</span>
-<span class="go">[130088.306575] sd 6:0:0:1: [sde] Mode Sense: 2f 00 00 00</span>
-<span class="go">[130088.307716] sd 6:0:0:1: [sde] Write cache: disabled, read cache: enabled, doesn&#39;t support DPO or FUA</span>
-<span class="go">[130088.313749]  sde: sde1 sde2 sde3</span>
-<span class="go">[130088.316561] sd 6:0:0:1: [sde] Attached SCSI removable disk</span>
-</pre></div>
+  <section id="tutoriel-1-prise-en-main">
+<span id="tutoriel1"></span><h1>Tutoriel 1 --- Prise en main<a class="headerlink" href="#tutoriel-1-prise-en-main" title="Lien vers cette rubrique">#</a></h1>
+<p>Cette série de tutoriels a été développé afin de vous accompagner dans la création de drivers Linux.
+On commencera par créer un driver pour un périphérique très simple (présenté ci-dessous), et on
+évoluera vers des designs plus réalistes.
+L'idée est de vous donner une méthodologie et du code &quot;qui marche&quot; (trop souvent le code que vous
+trouvez sur Internet est bogué ou mal écrit), afin que vous puissiez être &quot;inspirés&quot; par ces codes.</p>
+<div class="admonition warning">
+<p class="admonition-title">Avertissement</p>
+<p><strong>Vous êtes invités à les bricoler jusqu'à ce qu'ils se cassent ! (les logiciels, pas les
+cartes !)</strong>
+Rien n'est plus éducatif que bricoler quelque chose pour l'améliorer ou, tout
+simplement, essayer de comprendre comment ça fonctionne ;-)</p>
 </div>
+<section id="drv-adder">
+<h2>DRV-adder<a class="headerlink" href="#drv-adder" title="Lien vers cette rubrique">#</a></h2>
+<p>Le périphérique qu'on va vous décrire ne fait vraiment rien d'utile. Par contre, il représente un
+bon exemple d'un périphérique mappé en mémoire --- son utilisation ne diffère pas beaucoup d'un
+&quot;vrai&quot; dispositif sans avoir toute la complexité liée à un vrai dispositif, d'où son intérêt pour
+nous.</p>
+<p>Le développeur du périphérique nous a gentiment donné les adresses de registres :</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><div class="line-block">
+<div class="line">Adresse</div>
+</div>
+</th>
+<th class="head"><div class="line-block">
+<div class="line">Registre</div>
+</div>
+</th>
+<th class="head"><p>Type</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><div class="line-block">
+<div class="line">0x0000</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">ID device (0xCAFECAFE)</div>
+</div>
+</td>
+<td><p>RO</p></td>
+</tr>
+<tr class="row-odd"><td><div class="line-block">
+<div class="line">0x0004</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">increment</div>
+</div>
+</td>
+<td><p>RW</p></td>
+</tr>
+<tr class="row-even"><td><div class="line-block">
+<div class="line">0x0008</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">value</div>
+</div>
+</td>
+<td><p>RW</p></td>
+</tr>
+<tr class="row-odd"><td><div class="line-block">
+<div class="line">0x000C</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">initialization</div>
+</div>
+</td>
+<td><p>WO</p></td>
+</tr>
+<tr class="row-even"><td><div class="line-block">
+<div class="line">0x0010</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">threshold</div>
+</div>
+</td>
+<td><p>RW</p></td>
+</tr>
+<tr class="row-odd"><td><div class="line-block">
+<div class="line">0x0080</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">irq mask</div>
+</div>
+</td>
+<td><p>RW</p></td>
+</tr>
+<tr class="row-even"><td><div class="line-block">
+<div class="line">0x0084</div>
+</div>
+</td>
+<td><div class="line-block">
+<div class="line">irq capture</div>
+</div>
+</td>
+<td><p>RW</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>(RO = Read Only, WO = Write Only, RW = Read-Write).</p>
+<p>Il nous a aussi dit qu'il est parti du <em>DE1-SoC Computer System</em> fourni par
+Altera.
+Ci-dessous une capture d'écran qui montre les connexions dans QSys pour le Altera Computer,
+avec tout au fond notre bloc (<strong>reds_custom_0</strong>) :</p>
 <figure class="align-center">
-<a class="reference internal image-reference" href="../_images/skull.png"><img alt="../_images/skull.png" src="../_images/skull.png" style="width: 6cm;" />
+<a class="reference internal image-reference" href="../_images/qsys.png"><img alt="../_images/qsys.png" src="../_images/qsys.png" style="width: 22cm;" />
 </a>
 </figure>
-<p>Dans <strong>mon</strong> cas, il s'agit de <code class="file docutils literal notranslate"><span class="pre">/dev/sde</span></code>. FAITES BIEN ATTENTION AU NOM QUE
-<strong>VOUS</strong> OBTENEZ ! Si le mauvais périphérique est utilisé, cela peut réécrire sur
-votre système !</p>
-<p><span class="boldred">Dans la commande ci-dessous, il faudra remplacer</span>
-<code class="file docutils literal notranslate"><span class="pre">VOTREDISPOSITIF</span></code>
-<span class="boldred">avec le nom du dispositif que vous avez obtenu grâce à dmesg.</span></p>
-<p>Vous pourrez ainsi préparer la carte avec les commandes :</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">HOST:~$ </span>tar<span class="w"> </span>xzvf<span class="w"> </span>drv-2025-sdcard.tar.gz
-<span class="gp">HOST:~$ </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>drv-2024-sdcard.img<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/VOTREDISPOSITIF<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
-</pre></div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Explorez les connexions de notre bloc et essayez de découvrir pourquoi il a été ainsi câblé.</p>
 </div>
-<p>Replacez la carte SD dans la board DE1-SoC une fois la copie terminée !</p>
-<p>Vous trouverez davantage d'informations sur la commande <code class="code docutils literal notranslate"><span class="pre">dd</span></code> <a class="reference external" href="https://en.wikipedia.org/wiki/Dd_(Unix)">ici</a>.</p>
+<p>Depuis cette image, on peut s'imaginer que le dispositif aura un offset de 0xFF205000 dans la
+mémoire (car les &quot;lightweight FPGA slaves&quot; sont mappés à partir de l'adresse 0xFF200000).
+Le développeur du reds-adder nous a dit que le numéro d'interruption est 75.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Comment ai-je pu parvenir à cette valeur ? Pourquoi le designer n'a pas choisi 0xFF200000 ?
+Ou, encore mieux, 0x00000000 ?</p>
+</div>
+<p>Pour le vérifier, on peut essayer de lire l'ID du dispositif.</p>
+<div class="admonition warning">
+<p class="admonition-title">Avertissement</p>
+<p>Le développement d'un dispositif demande souvent l'étroite collaboration de personnes
+du côté HW et du côté SW de la force.
+Avoir un simple registre avec une constante facilement identifiable (non, zéro n'est pas
+une bonne valeur...) permet à l'ingénieur SW de vérifier que :</p>
+<ul class="simple">
+<li><p>le dispositif est sous tension</p></li>
+<li><p>le dispositif a une horloge active</p></li>
+<li><p>il est en train de parler avec le bon dispositif</p></li>
+<li><p>il sait correctement lire depuis le dispositif</p></li>
+<li><p>l'endianness est celle qu'il pensait (ou pas) --- au moins, s'il a
+été malin lors du choix de la constante, donc peut-être 0xAAAAAAAA
+n'est pas la meilleure valeur non plus</p></li>
+<li><p>...</p></li>
+</ul>
+<p>Avoir en plus un registre avec le numéro de version du bitstream
+c'est top :)</p>
+<p>Votre assistant a bêtement passé des décennies de sa vie en essayant de communiquer avec
+des dispositifs en power-down, ou bien avec le dispositif à la mauvaise adresse, ou avec l'
+horloge désactivée, ou ...</p>
+<p>Vous êtes donc autorisés à frapper votre ingénieur HW jusqu'à ce qu'il accepte d'ajouter
+ces registres dans son design !!! ;-)</p>
+</div>
+<figure class="align-center">
+<a class="reference internal image-reference" href="../_images/reset.png"><img alt="../_images/reset.png" src="../_images/reset.png" style="width: 22cm;" />
+</a>
+</figure>
+<p>Oups..... mais oui, c'est normal ! Il faut d'abord booter une fois la carte pour que l'image du
+bitstream soit chargée dans la mémoire (faudrait vraiment faire ce qu'on demande dans le texte... non !?!?).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Est-il vraiment nécessaire ? Pourrait-on le faire depuis U-Boot sans
+booter Linux ? (regardez les commandes U-Boot utilisées pour booter le
+système avec la commande <code class="code highlight console docutils literal highlight-console"><span class="gp"># </span>printenv</code>)</p>
+</div>
+<p>Donc reboot, et notre hypothèse semble être confirmée :</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="../_images/uboot_01.png"><img alt="../_images/uboot_01.png" src="../_images/uboot_01.png" style="width: 12cm;" />
+</a>
+</figure>
+<p>On peut maintenant voir ce qu'il nous a communiqué au sujet du fonctionnement du dispositif :</p>
+<ul class="simple">
+<li><p><strong>value</strong> et <strong>threshold</strong> sont initialisés à 0, <strong>increment</strong> à 1, les interrupts sont désactivés
+(<strong>irq mask</strong> à 0) et (bien sûr) il n'y a pas encore de interrupt capturés (donc <strong>irq capture</strong> est
+à 0)</p></li>
+<li><p>lorsque <strong>increment</strong> est à 1, une lecture de <strong>value</strong> en augmente la valeur de 1 et la retourne</p></li>
+<li><p>si <strong>increment</strong> est à 0 alors les lectures n'affectent pas <strong>value</strong></p></li>
+<li><p>écrire 1 dans <strong>initialization</strong> remet la valeur de <strong>value</strong> à 0</p></li>
+<li><p>si <strong>irq mask</strong> est à 1, alors dès que <strong>value</strong> dépasse <strong>threshold</strong> un interrupt est levé (c.a.d,
+<strong>irq capture</strong> devient 1)</p></li>
+<li><p>pour nettoyer un interrupt, il faut écrire 1 dans <strong>irq capture</strong>.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Imaginons la situation suivante :</p>
+<ul class="simple">
+<li><p><strong>value</strong>       = 0x1a</p></li>
+<li><p><strong>threshold</strong>   = 0x1c</p></li>
+<li><p><strong>increment</strong>   = 0x01</p></li>
+<li><p><strong>irq capture</strong> = 0x01</p></li>
+</ul>
+<p>Qu'est-ce qui se passe avec 4 lectures consécutives ? Détaillez les valeurs de tous les
+registres. Ensuite, vérifiez vos réponses sur la carte.</p>
+</div>
+<p>Dans le prochain tutoriel on verra comment interagir avec ce dispositif depuis Linux, et ensuite on
+en développera le driver.</p>
+</section>
 </section>
 
 
@@ -360,20 +536,20 @@ votre système !</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="helper.html"
+       href="../lab_01/lab_01.html"
        title="page précédente">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">précédent</p>
-        <p class="prev-next-title">Helper</p>
+        <p class="prev-next-title">Laboratoire 1 --- Introduction</p>
       </div>
     </a>
     <a class="right-next"
-       href="../lab_00/lab_00.html"
+       href="../lab_02/lab_02.html"
        title="page suivante">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">suivant</p>
-        <p class="prev-next-title">Laboratoire 0 --- Consolidation du langage C</p>
+        <p class="prev-next-title">Laboratoire 2 --- User-space Drivers</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -383,6 +559,21 @@ votre système !</p>
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contenu
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#drv-adder">DRV-adder</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
               
             
           </div>
