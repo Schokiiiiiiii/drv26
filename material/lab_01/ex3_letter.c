@@ -18,14 +18,14 @@
 #define KEY0_MASK       0b0001
 #define KEY1_MASK       0b0010
 
-int loop_stopped = 0;   // stops main loop if received signal
+int loop_stopped = 0;    // stops main loop if received signal
 uint8_t* memory_cursor;  // aims at the start of the memory
 
 static const uint8_t letters[26] = {
     /*A*/ 0x77, /*B*/ 0x7C, /*C*/ 0x39, /*D*/ 0x5E, /*E*/ 0x79, /*F*/ 0x71,
-    /*G*/ 0x3D, /*H*/ 0x76, /*I*/ 0x06, /*J*/ 0x1E, /*K*/ 0x76, /*L*/ 0x38,
-    /*M*/ 0x37, /*N*/ 0x54, /*O*/ 0x3F, /*P*/ 0x73, /*Q*/ 0x67, /*R*/ 0x50,
-    /*S*/ 0x6D, /*T*/ 0x78, /*U*/ 0x3E, /*V*/ 0x3E, /*W*/ 0x3E, /*X*/ 0x76,
+    /*G*/ 0x3D, /*H*/ 0x74, /*I*/ 0x06, /*J*/ 0x1E, /*K*/ 0x70, /*L*/ 0x38,
+    /*M*/ 0x15, /*N*/ 0x37, /*O*/ 0x3F, /*P*/ 0x73, /*Q*/ 0x67, /*R*/ 0x31,
+    /*S*/ 0x6D, /*T*/ 0x78, /*U*/ 0x3E, /*V*/ 0x1C, /*W*/ 0x2A, /*X*/ 0x76,
     /*Y*/ 0x6E, /*Z*/ 0x5B
 };
 
@@ -35,7 +35,7 @@ void signal_handler(const int sig) {
 }
 
 void write_letter(const char c) {
-    uint8_t* hex0 = (uint8_t *)(memory_cursor + HEX3TO0_OFFSET);
+    uint32_t* hex0 = (uint32_t *)(memory_cursor + HEX3TO0_OFFSET);
     *hex0 = letters[c - 'A']; // write over only the hexadecimal we need
 }
 

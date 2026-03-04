@@ -122,6 +122,14 @@ md.{b|w|l} addr length
 Vu qu'on récupère les bits de poids faible à l'adresse la plus faible, cela signifie qu'on a la fin du mot à l'adresse
 la plus basse et que nous sommes en little endian.
 
+#### Exercice 3 - Quel est le souci principal dans l'écriture de ce logiciel ?
+
+On écrit directement dans `/dev/mem`. On peut avoir donc des problèmes de concurrence et il y a également une absence de
+synchronisation totale.
+
+En utilisant le matériel directement depuis l'espace utilisateur sans passer par un driver, on prend beaucoup de risques
+du point de vue robustesse ou encore sécuritaire.
+
 ## Exercices
 
 ### Exercice 1

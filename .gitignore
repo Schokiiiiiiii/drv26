@@ -12,3 +12,5 @@ godbolt
 shifter
 hello
 hello_static
+*.tar.gz
+letter
