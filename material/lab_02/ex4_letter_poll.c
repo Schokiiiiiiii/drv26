@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <poll.h>
 
 #define BASE_OFFSET      0x0
 #define BASE_LENGTH      4096
@@ -202,7 +203,24 @@ int main(void) {
             goto error;
         }
 
-        // wait for an interrupt from uio
+        // register poll
+        struct pollfd fds = {
+            .fd = fd,
+            .events = POLLIN,
+        };
+
+        // wait for an event from the poll
+        int ret = poll(&fds, 1, -1);
+        if (ret <= 0) {
+            // if it's a SIGINT, check loop again
+            if (errno == EINTR) {
+                continue;
+            }
+            perror("Couldn't poll() properly\n");
+            goto error;
+        }
+
+        // read for interrupts inside uio
         nb = read(fd, &irq_count, sizeof(irq_count));
         if (nb != (ssize_t)sizeof(irq_count)) {
             perror("Couldn't read in uio for interrupts\n");

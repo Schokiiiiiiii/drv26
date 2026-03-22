@@ -133,3 +133,40 @@ définies dans le device tree.
 Le code est beaucoup plus simple et plus sécurisé. Nous n'avons pas besoin de tout mettre en place pour les échanges
 avec le kernel. Cependant, il y a moins de possibilités et nous sommes limité par une framework. Pour des drivers plus
 complexes, il faudrait avoir un drive dans le kernel. Les drivers Userspace sont également moins performants.
+
+## Exercices
+
+### Exercice 4
+
+> Il y a au moins 3 façons pour attendre une interruption au moyen de /dev/uio0. Lesquelles ?
+
+#### read()
+
+Avantages
+- Simple d'utilisation (read, write)
+- Peu de code
+- Fonctionne si on attend qu'une seule interruption
+
+Inconvénients
+- Moins flexible avec plusieurs interruptions
+
+#### select()
+
+Avantages
+- Plusieurs interruptions possibles
+
+Inconvénients
+- Utilisation complexe
+- Apparemment ne peut gérer que des fd < 1024
+- Il faut réinitialiser les sets à chaque tour
+
+#### poll()
+
+Avantages
+- Ressemble à read() donc simple d'utilisation avec des ajouts
+- Pas de limite de fd comme select()
+- Possibilité d'utiliser un timeout
+
+Inconvénients
+- Plus de code que read()
+- Pour un seul fd, read() est préférable mais sinon est meilleur que select()

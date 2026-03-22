@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/select.h>
 
 #define BASE_OFFSET      0x0
 #define BASE_LENGTH      4096
@@ -202,33 +203,54 @@ int main(void) {
             goto error;
         }
 
-        // wait for an interrupt from uio
-        nb = read(fd, &irq_count, sizeof(irq_count));
-        if (nb != (ssize_t)sizeof(irq_count)) {
-            perror("Couldn't read in uio for interrupts\n");
+        // descriptors to read
+        fd_set readfds;
+
+        // empty readfds then put our fd inside it
+        FD_ZERO(&readfds);
+        FD_SET(fd, &readfds);
+
+        // wait until we have a new readfds ready to be read
+        if (select(fd + 1, &readfds, NULL, NULL, NULL) <= 0) {
+            // handle SIGINT
+            if (errno == EINTR) {
+                continue;
+            }
+            perror("Coudln't select properly«n");
             goto error;
         }
 
-        // read interrupts
-        const uint32_t pending_irq = read_keys_edge();
+        // if it's the right file descriptor, handle the interrupt
+        if (FD_ISSET(fd, &readfds)) {
 
-        // act depending on what interruption happened
-        if (pending_irq & KEY0_MASK) {           // if key0, go back one letter
-            prev_letter();
-            write_letters();
-        } else if (pending_irq & KEY1_MASK) {    // if key1, go forward one letter
-            next_letter();
-            write_letters();
-        } else if (pending_irq & KEY2_MASK) {    // if key2, move right for edition
-            move_cursor_right();
-            write_leds();
-        } else if (pending_irq & KEY3_MASK) {    // if key3, move right for edition
-            move_cursor_left();
-            write_leds();
+            // wait for an interrupt from uio
+            nb = read(fd, &irq_count, sizeof(irq_count));
+            if (nb != (ssize_t)sizeof(irq_count)) {
+                perror("Couldn't read in uio for interrupts\n");
+                goto error;
+            }
+
+            // read interrupts
+            const uint32_t pending_irq = read_keys_edge();
+
+            // act depending on what interruption happened
+            if (pending_irq & KEY0_MASK) {           // if key0, go back one letter
+                prev_letter();
+                write_letters();
+            } else if (pending_irq & KEY1_MASK) {    // if key1, go forward one letter
+                next_letter();
+                write_letters();
+            } else if (pending_irq & KEY2_MASK) {    // if key2, move right for edition
+                move_cursor_right();
+                write_leds();
+            } else if (pending_irq & KEY3_MASK) {    // if key3, move right for edition
+                move_cursor_left();
+                write_leds();
+            }
+
+            // clear interrupts
+            clear_keys_edge(pending_irq);
         }
-
-        // clear interrupts
-        clear_keys_edge(pending_irq);
     }
 
     // clean hardware and close file descriptor
