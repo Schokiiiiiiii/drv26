@@ -588,7 +588,7 @@ Vérifiez la version de la toolchain par défaut :
 
     HOST:~$ arm-linux-gnueabihf-gcc --version
 
-S'il s'agit d'une version différente, vérifiez que la version *6.4.1* existe bien :
+S'il s'agit d'une version différente, vérifiez que la version *11.3.1* existe bien :
 
 .. code-block:: console
 

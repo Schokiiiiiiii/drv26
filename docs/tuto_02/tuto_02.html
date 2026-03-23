@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Flasher la carte SD &#8212; Documentation DRV 2025 </title>
+    <title>Tutoriel 2 --- REDS-adder driver v0.1 et v1.1 &#8212; Documentation DRV 2025 </title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=e6b791cb"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'helper/flash_sd';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tuto_02/tuto_02';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Recherche" href="../search.html" />
-    <link rel="next" title="Laboratoire 0 --- Consolidation du langage C" href="../lab_00/lab_00.html" />
-    <link rel="prev" title="Helper" href="helper.html" />
+    <link rel="next" title="Laboratoire 3 --- Introduction aux drivers kernel-space" href="../lab_03/lab_03.html" />
+    <link rel="prev" title="Laboratoire 2 --- User-space Drivers" href="../lab_02/lab_02.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="fr"/>
   </head>
@@ -157,14 +157,14 @@
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="eval_criterion.html">Consigne de rendu</a></li>
-<li class="toctree-l1"><a class="reference internal" href="helper.html">Helper</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Flasher carte SD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/eval_criterion.html">Consigne de rendu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/helper.html">Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/flash_sd.html">Flasher carte SD</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_00/lab_00.html">Laboratoire 0</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_01/lab_01.html">Laboratoire 1</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tuto_01/tuto_01.html">Tuto 1</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_02/lab_02.html">Laboratoire 2</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tuto_02/tuto_02.html">Tuto 2</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Tuto 2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_03/lab_03.html">Laboratoire 3</a></li>
 </ul>
 
@@ -220,7 +220,7 @@
       
       
       
-      <li><a href="../_sources/helper/flash_sd.rst" target="_blank"
+      <li><a href="../_sources/tuto_02/tuto_02.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Télécharger le fichier source"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -302,7 +302,7 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Flasher la carte SD</h1>
+    <h1>Tutoriel 2 ---  REDS-adder driver v0.1 et v1.1</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
@@ -316,38 +316,50 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="flasher-la-carte-sd">
-<span id="flash-sd"></span><h1>Flasher la carte SD<a class="headerlink" href="#flasher-la-carte-sd" title="Lien vers cette rubrique">#</a></h1>
-<p>Un cas de problème avec l'image de la carte SD, il est possible de la reflasher.</p>
-<p>Pour cela, il faut télécharger l'archive <code class="file docutils literal notranslate"><span class="pre">drv-2026-sdcard.tar.gz</span></code> contenant l'image de la carte SD [disponible <a class="reference external" href="http://reds-data.heig-vd.ch/cours/2026_drv/drv-2026-sdcard.tar.gz">ici</a>]</p>
-<p>Une fois téléchargé l'archive contenant l'image de la carte SD, vous devez identifier le dispositif associé avec le lecteur de cartes avec la commande <strong>dmesg</strong>:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">HOST:~$ </span>dmesg
-<span class="go">...</span>
-<span class="go">130088.305550] sd 6:0:0:1: [sde] 31422464 512-byte logical blocks: (16.1 GB/15.0 GiB)</span>
-<span class="go">[130088.306567] sd 6:0:0:1: [sde] Write Protect is off</span>
-<span class="go">[130088.306575] sd 6:0:0:1: [sde] Mode Sense: 2f 00 00 00</span>
-<span class="go">[130088.307716] sd 6:0:0:1: [sde] Write cache: disabled, read cache: enabled, doesn&#39;t support DPO or FUA</span>
-<span class="go">[130088.313749]  sde: sde1 sde2 sde3</span>
-<span class="go">[130088.316561] sd 6:0:0:1: [sde] Attached SCSI removable disk</span>
+  <section id="tutoriel-2-reds-adder-driver-v0-1-et-v1-1">
+<span id="tutoriel2"></span><h1>Tutoriel 2 ---  REDS-adder driver v0.1 et v1.1<a class="headerlink" href="#tutoriel-2-reds-adder-driver-v0-1-et-v1-1" title="Lien vers cette rubrique">#</a></h1>
+<p>Dans ce tutoriel on explorera le développement de drivers Linux plus en détail.
+En particulier, deux exemples de driver Linux ont été écrits pour notre dispositif
+REDS-adder (voir <a class="reference internal" href="../tuto_01/tuto_01.html#tutoriel1"><span class="std std-ref">Tutoriel 1 --- Prise en main</span></a>), et un logiciel de test a également été développé.</p>
+<p>Vous pouvez trouver ces fichiers dans le dépôt git.</p>
+<p>Avec un peu d'imagination, on peut s'imaginer que notre dispositif REDS-adder soit
+en réalité un puissant système de chiffrement, qui est censé fonctionner de la
+façon suivante :</p>
+<ul class="simple">
+<li><p>l'utilisateur rentre la chaîne de caractères à chiffrer avec un appel à <code class="code highlight c docutils literal highlight-c"><span class="n">write</span><span class="p">()</span></code> sur le dispositif dans <code class="file docutils literal notranslate"><span class="pre">/dev</span></code>. Mais attention ! Notre dispositif de chiffrement n'opère qu'avec des entiers, il faudra donc bien soigner la conversion entre caractères et valeurs entières</p></li>
+<li><p>l'algorithme en effectue le chiffrement en rajoutant à la valeur ASCII de chaque caractère la valeur actuelle du registre <code class="code highlight c docutils literal highlight-c"><span class="n">VALUE</span></code>. La valeur du seuil ramène cette valeur à 1 grâce à l'intervention d'un interrupt</p></li>
+<li><p>en lisant depuis le fichier du dispositif dans <code class="file docutils literal notranslate"><span class="pre">/dev</span></code>, l'utilisateur obtient une chaîne d'entiers en format binaire, qui doit être convertie en chaîne de caractères pour qu'on puisse avoir notre message chiffré.</p></li>
+</ul>
+<p>Afin que le dispositif soit détecté par le noyau, il est impératif de modifier le
+device tree en rajoutant dans le fichier <code class="file docutils literal notranslate"><span class="pre">arch/arm/boot/dts/socfpga_cyclone5_sockit.dts</span></code>
+(juste après le noeud de <code class="code highlight c docutils literal highlight-c"><span class="n">drv2026</span></code>) le noeud :</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">reds</span><span class="o">-</span><span class="n">adder</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">compatible</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;reds,reds-adder&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="n">reg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="mh">0xFF205000</span><span class="w"> </span><span class="mh">0x1000</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="w">    </span><span class="n">interrupts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="n">GIC_SPI</span><span class="w"> </span><span class="mi">43</span><span class="w"> </span><span class="n">IRQ_TYPE_EDGE_RISING</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="w">    </span><span class="n">interrupt</span><span class="o">-</span><span class="n">parent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;&amp;</span><span class="n">intc</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="p">};</span>
 </pre></div>
 </div>
-<figure class="align-center">
-<a class="reference internal image-reference" href="../_images/skull.png"><img alt="../_images/skull.png" src="../_images/skull.png" style="width: 6cm;" />
-</a>
-</figure>
-<p>Dans <strong>mon</strong> cas, il s'agit de <code class="file docutils literal notranslate"><span class="pre">/dev/sde</span></code>. FAITES BIEN ATTENTION AU NOM QUE
-<strong>VOUS</strong> OBTENEZ ! Si le mauvais périphérique est utilisé, cela peut réécrire sur
-votre système !</p>
-<p><span class="boldred">Dans la commande ci-dessous, il faudra remplacer</span>
-<code class="file docutils literal notranslate"><span class="pre">VOTREDISPOSITIF</span></code>
-<span class="boldred">avec le nom du dispositif que vous avez obtenu grâce à dmesg.</span></p>
-<p>Vous pourrez ainsi préparer la carte avec les commandes :</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">HOST:~$ </span>tar<span class="w"> </span>xzvf<span class="w"> </span>drv-2025-sdcard.tar.gz
-<span class="gp">HOST:~$ </span>sudo<span class="w"> </span>dd<span class="w"> </span><span class="k">if</span><span class="o">=</span>drv-2024-sdcard.img<span class="w"> </span><span class="nv">of</span><span class="o">=</span>/dev/VOTREDISPOSITIF<span class="w"> </span><span class="nv">bs</span><span class="o">=</span>4M<span class="w"> </span><span class="nv">conv</span><span class="o">=</span>fsync<span class="w"> </span><span class="nv">status</span><span class="o">=</span>progress
+<p>Pourquoi 43 alors que l'interrupt que l'ingénieur HW nous a donné était 75 ?
+Car il est shared, donc il faut soustraire 32 au numéro de l'interrupt, voir
+<a class="reference external" href="http://billauer.co.il/blog/2012/08/irq-zynq-dts-cortex-a9/">ici</a>.
+(vous pouvez vérifier qu'il est correct en regardant la sortie de <code class="code highlight bash docutils literal highlight-bash">cat<span class="w"> </span>/proc/interrupts</code> une fois
+le driver inséré).</p>
+<p>N'oubliez pas de compiler et copier le nouveau DT avec :</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span><span class="nv">ARCH</span><span class="o">=</span>arm<span class="w"> </span><span class="nv">CROSS_COMPILE</span><span class="o">=</span>arm-linux-gnueabihf-<span class="w"> </span>socfpga_cyclone5_sockit.dtb
+<span class="gp">$ </span>cp<span class="w"> </span><span class="nv">$HOME</span>/tftpboot/socfpga.dtb<span class="w"> </span><span class="nv">$HOME</span>/tftpboot/socfpga.dtb.old
+<span class="gp">$ </span>cp<span class="w"> </span>arch/arm/boot/dts/socfpga_cyclone5_sockit.dtb<span class="w"> </span><span class="nv">$HOME</span>/tftpboot/socfpga.dtb
 </pre></div>
 </div>
-<p>Replacez la carte SD dans la board DE1-SoC une fois la copie terminée !</p>
-<p>Vous trouverez davantage d'informations sur la commande <code class="code docutils literal notranslate"><span class="pre">dd</span></code> <a class="reference external" href="https://en.wikipedia.org/wiki/Dd_(Unix)">ici</a>.</p>
+<p>Les deux drivers d'exemples se situent dans les dossiers <code class="file docutils literal notranslate"><span class="pre">material/reds_adder__x.1</span></code> (<cite>x</cite> étant <cite>0</cite> et <cite>1</cite>).
+Un fichier <code class="code highlight bash docutils literal highlight-bash">Makefile</code> se trouve dans ces dossiers pour la compilation. Modifiez les valeurs des variables <code class="code highlight bash docutils literal highlight-bash">KERNELDIR</code> (chemin vers la racine de votre copie local du kernel Linux cloné dans les précédents labos) et <code class="code highlight bash docutils literal highlight-bash">TOOLCHAIN</code>.</p>
+<p>Une fois une version du driver compilé à l'aide de <code class="code highlight bash docutils literal highlight-bash">make</code>, un module (fichier <code class="file docutils literal notranslate"><span class="pre">.ko</span></code>) est créé, ainsi qu'un exécutable du programme de test.
+Ces deux fichiers peuvent être copiés dans le dossier partagé avec la carte (<code class="file docutils literal notranslate"><span class="pre">/export/drv</span></code>).
+Le module peut être inséré à l'aide de <code class="code highlight bash docutils literal highlight-bash">insmod</code>. Attention à bien enlever le module avant d'insérer une nouvelle version à l'aide de <code class="code highlight bash docutils literal highlight-bash">rmmod</code>.</p>
+<p>Plus de détails sur les drivers sont donnés en tant que commentaires dans le code.
+Explorer le code pour comprendre son fonctionnement et n'hésitez pas à vous en inspirer pour vos futurs drivers !
+N'hésitez pas non plus à bricoler le logiciel de test ainsi que le driver !</p>
 </section>
 
 
@@ -362,20 +374,20 @@ votre système !</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="helper.html"
+       href="../lab_02/lab_02.html"
        title="page précédente">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">précédent</p>
-        <p class="prev-next-title">Helper</p>
+        <p class="prev-next-title">Laboratoire 2 --- User-space Drivers</p>
       </div>
     </a>
     <a class="right-next"
-       href="../lab_00/lab_00.html"
+       href="../lab_03/lab_03.html"
        title="page suivante">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">suivant</p>
-        <p class="prev-next-title">Laboratoire 0 --- Consolidation du langage C</p>
+        <p class="prev-next-title">Laboratoire 3 --- Introduction aux drivers kernel-space</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
