@@ -14,3 +14,8 @@ hello
 hello_static
 *.tar.gz
 letter
+ioctl
+test
+*.mod
+empty
+devmem2

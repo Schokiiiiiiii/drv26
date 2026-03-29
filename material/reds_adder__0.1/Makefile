@@ -1,6 +1,6 @@
 # !!! Change the path below to the location of your kernel !!!
-KERNELDIR := /home/reds/linux-socfpga/
-TOOLCHAIN := /opt/toolchains/gcc-linaro-11.3.1-2022.06-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-
+KERNELDIR := /home/schoki/Documents/HEIG-VD/Semestre4/DRV/linux-socfpga
+TOOLCHAIN := /opt/toolchains/arm-linux-gnueabihf_11.3.1/bin/arm-linux-gnueabihf-
 
 obj-m := reds_adder_v0.o
 
