@@ -14,3 +14,4 @@ Laboratoire de Conception de Drivers --- Semestre de printemps 2025-2026
    Laboratoire 2 <lab_02/lab_02>
    Tuto 2 <tuto_02/tuto_02>
    Laboratoire 3 <lab_03/lab_03>
+   Laboratoire 4 <lab_04/lab_04>
