@@ -37,8 +37,8 @@ Vous pourrez ainsi préparer la carte avec les commandes :
 
 .. code-block:: console
 
-   HOST:~$ tar xzvf drv-2025-sdcard.tar.gz
-   HOST:~$ sudo dd if=drv-2024-sdcard.img of=/dev/VOTREDISPOSITIF bs=4M conv=fsync status=progress
+   HOST:~$ tar xzvf drv-2026-sdcard.tar.gz
+   HOST:~$ sudo dd if=drv-2026-sdcard.img of=/dev/VOTREDISPOSITIF bs=4M conv=fsync status=progress
 
 Replacez la carte SD dans la board DE1-SoC une fois la copie terminée !
 
