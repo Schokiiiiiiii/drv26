@@ -46,22 +46,29 @@ static struct {
 static ssize_t parrot_read(struct file *filp, char __user *buf, size_t count,
 			   loff_t *ppos) {
 
+	size_t available;
+	size_t nb_read;
+
 	// check arguments validity
-	if (count <= 0 || *ppos < 0 || *ppos >= parrot_data.length || buf == NULL)
+	if (buf == NULL || *ppos < 0)
 		return -EINVAL;
 
-	// check we don't read over length
-	if (*ppos + count > parrot_data.length)
-		return -EINVAL;
+	// check for EOF
+	if (*ppos >= parrot_data.length)
+		return 0;
+
+	// register actual size
+	available = parrot_data.length - *ppos;
+	nb_read = (count > available ? available : count);
 
 	// copy to user
-	if (copy_to_user(buf, parrot_data.data + *ppos, count))
+	if (copy_to_user(buf, parrot_data.data + *ppos, nb_read))
 		return -EFAULT;
 
 	// update ppos
-	*ppos += count;
+	*ppos += nb_read;
 
-	return count;
+	return nb_read;
 }
 
 /**
@@ -79,19 +86,27 @@ static ssize_t parrot_read(struct file *filp, char __user *buf, size_t count,
 static ssize_t parrot_write(struct file *filp, const char __user *buf,
 			    size_t count, loff_t *ppos) {
 
+	uint8_t *tmp;
+
 	// check arguments validity
-	if (count <= 0 || *ppos < 0 || *ppos >= parrot_data.length || buf == NULL)
+	if (buf == NULL || *ppos < 0)
 		return -EINVAL;
 
-	// check we don't go over MAX_LENGTH
+	// return if we're not writing anything
+	if (count == 0)
+		return 0;
+
+	// check threshold
 	if (*ppos + count > MAX_LENGTH)
 		return -EINVAL;
 
 	// realloc if necessary
 	if (*ppos + count > parrot_data.length) {
-		parrot_data.data = devm_krealloc(parrot_data.clsdev, (void *)parrot_data.data, *ppos + count, GFP_KERNEL);
-		if (parrot_data.data == NULL)
+		tmp = devm_krealloc(parrot_data.clsdev, (void *)parrot_data.data, *ppos + count, GFP_KERNEL);
+		if (tmp == NULL)
 			return -ENOMEM;
+		parrot_data.data = tmp;
+		parrot_data.length = *ppos + count;
 	}
 
 	// copy from user space
