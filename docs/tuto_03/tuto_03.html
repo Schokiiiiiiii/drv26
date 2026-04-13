@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Helper &#8212; Documentation DRV 2026 </title>
+    <title>Tutoriel 3 --- REDS-adder driver v2.1 et v3.1 &#8212; Documentation DRV 2026 </title>
   
   
   
@@ -42,11 +42,11 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
     <script src="../_static/translations.js?v=e6b791cb"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'helper/helper';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tuto_03/tuto_03';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Recherche" href="../search.html" />
-    <link rel="next" title="Flasher la carte SD" href="flash_sd.html" />
-    <link rel="prev" title="Critère d&#39;évaluation" href="eval_criterion.html" />
+    <link rel="next" title="Laboratoire 5 --- Développement de drivers kernel-space II" href="../lab_05/lab_05.html" />
+    <link rel="prev" title="Laboratoire 4 --- Développement de drivers kernel-space I" href="../lab_04/lab_04.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="fr"/>
   </head>
@@ -157,9 +157,9 @@
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="eval_criterion.html">Consigne de rendu</a></li>
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">Helper</a></li>
-<li class="toctree-l1"><a class="reference internal" href="flash_sd.html">Flasher carte SD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/eval_criterion.html">Consigne de rendu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/helper.html">Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/flash_sd.html">Flasher carte SD</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_00/lab_00.html">Laboratoire 0</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_01/lab_01.html">Laboratoire 1</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../tuto_01/tuto_01.html">Tuto 1</a></li>
@@ -167,7 +167,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../tuto_02/tuto_02.html">Tuto 2</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_03/lab_03.html">Laboratoire 3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_04/lab_04.html">Laboratoire 4</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../tuto_03/tuto_03.html">Tuto 3</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Tuto 3</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../lab_05/lab_05.html">Laboratoire 5</a></li>
 </ul>
 
@@ -223,7 +223,7 @@
       
       
       
-      <li><a href="../_sources/helper/helper.rst" target="_blank"
+      <li><a href="../_sources/tuto_03/tuto_03.rst" target="_blank"
    class="btn btn-sm btn-download-source-button dropdown-item"
    title="Télécharger le fichier source"
    data-bs-placement="left" data-bs-toggle="tooltip"
@@ -294,9 +294,7 @@ document.write(`
   </button>
 `);
 </script>
-<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="fa-solid fa-list"></span>
-</button>
+
 </div></div>
       
     </div>
@@ -307,19 +305,11 @@ document.write(`
               
 
 <div id="jb-print-docs-body" class="onlyprint">
-    <h1>Helper</h1>
+    <h1>Tutoriel 3 ---  REDS-adder driver v2.1 et v3.1</h1>
     <!-- Table of contents -->
     <div id="print-main-content">
         <div id="jb-print-toc">
             
-            <div>
-                <h2> Contenu </h2>
-            </div>
-            <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification-du-style-de-code">Vérification du style de code</a></li>
-</ul>
-            </nav>
         </div>
     </div>
 </div>
@@ -329,32 +319,40 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="helper">
-<span id="id1"></span><h1>Helper<a class="headerlink" href="#helper" title="Lien vers cette rubrique">#</a></h1>
-<section id="verification-du-style-de-code">
-<h2>Vérification du style de code<a class="headerlink" href="#verification-du-style-de-code" title="Lien vers cette rubrique">#</a></h2>
-<p>Afin de vérifier le respect du style de code du kernel Linux, le script <code class="code highlight bash docutils literal highlight-bash">style_check</code> est mis à disposition.
-Celui-ci se trouve dans le dossier <code class="code highlight bash docutils literal highlight-bash">material/helper</code>. Il prend comme unique argument le fichier à contrôler.
-Avant utilisation, il faut installer les outils <code class="code highlight bash docutils literal highlight-bash">meld</code> et <code class="code highlight bash docutils literal highlight-bash">clang-format</code> (<code class="code highlight bash docutils literal highlight-bash">sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>meld<span class="w"> </span>clang-format</code>).</p>
-<p>L'outil <code class="code highlight bash docutils literal highlight-bash">meld</code> est une interface graphique montrant les différences entre deux fichiers côte à côte et d'appliquer les changements directement dans le fichier voulu.
-Il est très utile lors de merge ou pour voir ce qui à changer dans le code avec Git.
-Les commandes <code class="code highlight bash docutils literal highlight-bash">git<span class="w"> </span>difftool</code> et <code class="code highlight bash docutils literal highlight-bash">git<span class="w"> </span>mergetool</code> dans un repo Git permet de l'utiliser pour ces cas-là.</p>
-<p>Le script fourni fait en sorte que le fichier de gauche soit l'original et celui de droite la version formatée par <code class="code highlight bash docutils literal highlight-bash">clang-format</code>.
-Ce dernier est en fichier temporaire et sera supprimé après fermeture de l'outil. Vous pouvez cependant appliquer les différences sur le fichier original !
-<code class="code highlight bash docutils literal highlight-bash">clang-format</code> est un bon outil de formatage automatique, mais ne permet pas de tout faire, garder un oeil critique sur les changements proposés.</p>
-<p>Pour simplifier son utilisation, un lien symbolique peut être créé vers le script dans le dossier <code class="code highlight bash docutils literal highlight-bash">/usr/bin/local</code></p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>ln<span class="w"> </span>-s<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/material/helper/style_check.sh<span class="w"> </span>/usr/local/bin/style_check
-</pre></div>
-</div>
-<figure class="align-center" id="id2">
-<img alt="../_images/meld.png" src="../_images/meld.png" />
-<figcaption>
-<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Exemple de meld sur un fichier, avec à gauche le fichier original et à droite les corrections proposées automatiquement.
-Ici, certaines indentations était faite avec des espaces et sont donc corrigées en tabulation, également certains espacements
-n'étaient pas correctement respecté.</span><a class="headerlink" href="#id2" title="Lien vers cette image">#</a></p>
-</figcaption>
+  <section id="tutoriel-3-reds-adder-driver-v2-1-et-v3-1">
+<span id="tutoriel3"></span><h1>Tutoriel 3 ---  REDS-adder driver v2.1 et v3.1<a class="headerlink" href="#tutoriel-3-reds-adder-driver-v2-1-et-v3-1" title="Lien vers cette rubrique">#</a></h1>
+<figure class="align-right">
+<a class="reference internal image-reference" href="../_images/logo_drv.png"><img alt="../_images/logo_drv.png" src="../_images/logo_drv.png" style="width: 6cm;" />
+</a>
 </figure>
-</section>
+<p>Dans ce tutoriel, on explorera davantage de possibilités offertes par le Linux
+Device Model pour améliorer notre driver.</p>
+<p>Les fichiers de ce tutoriel se trouvent dans le dépôt git.</p>
+<p><strong>sysfs</strong> nous permet d'exposer à l'utilisateur une série de propriétés, afin
+de pouvoir aisément configurer et interagir avec notre dispositif.
+Dans le contexte de notre driver, on utilisera sysfs pour :</p>
+<ul class="simple">
+<li><p>voir la taille maximale de la chaîne de caractères à chiffrer;</p></li>
+<li><p>voir et modifier le seuil utilisé pour le chiffrement;</p></li>
+<li><p>voir et modifier l'opération effectuée par le dispositif (chiffrement ou
+déchiffrement).</p></li>
+</ul>
+<p>Le driver v2.1 est identique à la version 1.1, sauf qu'une entrée dans sysfs a
+été ajoutée --- n'hésitez pas à comparer les deux versions du driver à l'aide
+d'un outil tel que <a class="reference external" href="https://meldmerge.org/">meld</a>, cela vous montrera comment
+vous pouvez ajouter des fichiers dans sysfs.</p>
+<p>Pouvoir changer ces propriétés à la volée introduit des problèmes potentiels : par
+exemple, qu'est-ce qui va se passer si l'on modifie l'opération effectuée pendant
+qu'elle est en cours ?
+Pour éviter ces situations, une primitive de synchronisation (mutex) a été
+introduite.</p>
+<p>De plus, afin de mieux pouvoir gérer les données stockées dans notre driver, le
+vecteur qu'on avait utilisé dans le tutoriel 2 a été remplacé par une KFIFO.</p>
+<p>Le driver v3.1 est donc une version bien plus complète du driver pour notre
+dispositif.
+Essayez de comprendre ses mécanismes de fonctionnement et cherchez à
+l'améliorer en rajoutant des fonctionnalités et en optimisant ses opérations.</p>
+<p><em>Have fun</em> et, bien sûr, on est à votre disposition pour toute question éventuelle ! :-)</p>
 </section>
 
 
@@ -369,20 +367,20 @@ n'étaient pas correctement respecté.</span><a class="headerlink" href="#id2" t
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="eval_criterion.html"
+       href="../lab_04/lab_04.html"
        title="page précédente">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">précédent</p>
-        <p class="prev-next-title">Critère d'évaluation</p>
+        <p class="prev-next-title">Laboratoire 4 --- Développement de drivers kernel-space I</p>
       </div>
     </a>
     <a class="right-next"
-       href="flash_sd.html"
+       href="../lab_05/lab_05.html"
        title="page suivante">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">suivant</p>
-        <p class="prev-next-title">Flasher la carte SD</p>
+        <p class="prev-next-title">Laboratoire 5 --- Développement de drivers kernel-space II</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -392,21 +390,6 @@ n'étaient pas correctement respecté.</span><a class="headerlink" href="#id2" t
             </div>
             
             
-              
-                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contenu
-  </div>
-  <nav class="bd-toc-nav page-toc">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#verification-du-style-de-code">Vérification du style de code</a></li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>
