@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
@@ -20,6 +19,7 @@
 /* Offsets for the registers detailed in the documentation */
 #define LED_REG_OFF        0x0000 // leds
 
+#define NB_LEDS 10
 #define UP   0
 #define DOWN 1
 
@@ -84,7 +84,7 @@ static void chaser_write(struct priv const *const priv, int const reg_offset, in
 	WARN_ON(priv == NULL);
 	WARN_ON(priv->mem_ptr == NULL);
 
-	// write inside the register (divided by 4 because int)
+	// DO NOT REMOVE CASTING ELSE IT EXPLODES
 	iowrite32(value, (int *)priv->mem_ptr + (reg_offset / 4));
 }
 
@@ -94,6 +94,8 @@ static int chaser_file_open(struct inode *inode, struct file *filp) {
 	// Register private data back in filp
 	priv = container_of(inode->i_cdev, struct priv, cdev);
 	filp->private_data = priv;
+
+	dev_info(priv->dev, "Received an open call\n");
 
 	return nonseekable_open(inode, filp);
 }
@@ -107,6 +109,8 @@ static int chaser_file_write(struct file *filp, const char __user *buf, size_t c
 	char tmp[5];
 	size_t len;
 
+	dev_info(priv->dev, "Received a job from write\n");
+
 	// check pointers
 	if (filp == NULL || buf == NULL) {
 		return -EINVAL;
@@ -117,35 +121,31 @@ static int chaser_file_write(struct file *filp, const char __user *buf, size_t c
 		return 0;
 	}
 
-	// check if EOF
-	if (*ppos > 0) {
-		return EOF;
-	}
-
 	// check we can add a job
 	if (kfifo_is_full(&priv->jobs)) {
 		dev_info(priv->dev, "No space for more jobs");
 		return -ENOMEM;
 	}
 
-	// TODO fix how we trim it because there might be "UP\n"
-	if (count > 4)
-		len = 4;
-	else
-		len = count;
+	// with echo '\n' is counted (echo "UP" > /dev/chaser0)
+	// "DOWN\n" (count = 5) => 4 characters, add [4] as \0
+	// "UP\n"   (count = 3) => 2 characters, add [2] as \0
+	len = (count > 3 ? 4 : min(count, (size_t)2));
 
 	// copy from user space
 	if (copy_from_user(tmp, buf, len))
 		return -EFAULT;
 	tmp[len] = '\0';
 
-	if (strcmp(tmp, "UP") == 0) {
-		kfifo_put(&priv->jobs, 0);
-	} else if (strcmp(tmp, "DOWN") == 0) {
-		kfifo_put(&priv->jobs, 1);
+	dev_info(priv->dev, "buf:%s and count:%u", tmp, count);
+
+	if (strcmp(tmp, "up") == 0) {
+		kfifo_put(&priv->jobs, UP);
+	} else if (strcmp(tmp, "down") == 0) {
+		kfifo_put(&priv->jobs, DOWN);
 	} else {
 		dev_info(priv->dev, "Received an invalid command, thrown in the bin\n");
-		return 0;
+		return -EINVAL;
 	}
 
 	// wake up worker
@@ -154,7 +154,7 @@ static int chaser_file_write(struct file *filp, const char __user *buf, size_t c
 	// update ppos
 	*ppos += len;
 
-	return len;
+	return count;
 }
 
 /**
@@ -186,9 +186,9 @@ static int chaser_worker(void *data) {
 			continue;
 		}
 
-		for (uint8_t i = 0 ; i < 9 ; ++i) {
-			chaser_write(priv, LED_REG_OFF, (job == UP ? i : (9 - i)));
-			msleep(1000);
+		for (uint8_t i = 0; i < NB_LEDS && !kthread_should_stop(); ++i) {
+			chaser_write(priv, LED_REG_OFF, job == UP ? 1 << i : 1 << (NB_LEDS - i));
+			msleep_interruptible(1000);
 		}
 		chaser_write(priv, LED_REG_OFF, 0);
 	}
@@ -276,12 +276,12 @@ static int chaser_probe(struct platform_device *pdev) {
 	if (IS_ERR(priv->thread)) {
 		pr_err("Unable to create thread 1\n");
 		rc = PTR_ERR(priv->thread);
-		goto return_fail;
+		goto destroy_sysfs_group;
 	}
 
 	dev_info(&pdev->dev, "Launched worker\n");
 
-	// get major and minor from kernel
+	// get major and minor from kerneldestroy_sysfs_group
 	rc = alloc_chrdev_region(
 		&priv->dev_num, /* Will contain the assigned numbers */
 		0,				/* First minor we request */
@@ -333,11 +333,13 @@ delete_cdev:
 free_cdev:
 	class_destroy(priv->dev_class);
 free_chrdev:
-	unregister_chrdev(MAJOR(priv->dev_num), DEV_NAME);
+	unregister_chrdev_region(priv->dev_num, 1);
 destroy_sysfs_group:
 	sysfs_remove_group(&pdev->dev.kobj, &chaser_attribute_group);
+free_thread:
+	kthread_stop(priv->thread);
 free_kfifo:
-	kfree(priv);
+	kfifo_free(&priv->jobs);
 return_fail:
 	return rc;
 }
@@ -364,16 +366,19 @@ static int chaser_remove(struct platform_device *pdev) {
 	class_destroy(priv->dev_class);
 
 	// unregister character device
-	unregister_chrdev(MAJOR(priv->dev_num), DEV_NAME);
+	unregister_chrdev_region(priv->dev_num, 1);
 
-	// free kfifo
-	kfifo_free(&priv->data_fifo);
+	// remove sysfs group
+	sysfs_remove_group(&pdev->dev.kobj, &chaser_attribute_group);
 
 	// free thread
 	if (priv->thread) {
 		kthread_stop(priv->thread);
 		wake_up_interruptible(&priv->worker_wait);
 	}
+
+	// free kfifo
+	kfifo_free(&priv->jobs);
 
 	// clear everything
 	chaser_write(priv, LED_REG_OFF, 0x0);
