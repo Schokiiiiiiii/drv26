@@ -1,0 +1,755 @@
+
+<!DOCTYPE html>
+
+
+<html lang="fr" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Laboratoire 6 --- Développement de drivers kernel-space III &#8212; Documentation DRV 2026 </title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/color.css?v=8770e769" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=72dce1d2"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../_static/translations.js?v=e6b791cb"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'lab_06/lab_06';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Recherche" href="../search.html" />
+    <link rel="prev" title="Laboratoire 5 --- Développement de drivers kernel-space II" href="../lab_05/lab_05.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="fr"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Passer au contenu principal</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Haut de page</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo_drv.png" class="logo__image only-light" alt="Documentation DRV 2026  - Home"/>
+    <script>document.write(`<img src="../_static/logo_drv.png" class="logo__image only-dark" alt="Documentation DRV 2026  - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Recherche" aria-label="Recherche" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Recherche</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../helper/eval_criterion.html">Consigne de rendu</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/helper.html">Helper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../helper/flash_sd.html">Flasher carte SD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_00/lab_00.html">Laboratoire 0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_01/lab_01.html">Laboratoire 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tuto_01/tuto_01.html">Tuto 1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_02/lab_02.html">Laboratoire 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tuto_02/tuto_02.html">Tuto 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_03/lab_03.html">Laboratoire 3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_04/lab_04.html">Laboratoire 4</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tuto_03/tuto_03.html">Tuto 3</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lab_05/lab_05.html">Laboratoire 5</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Laboratoire 6</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Téléchargez cette page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/lab_06/lab_06.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Télécharger le fichier source"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Imprimer au format PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Mode plein écran"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="clair/sombre" aria-label="clair/sombre" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Recherche" aria-label="Recherche" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Laboratoire 6 --- Développement de drivers kernel-space III</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contenu </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#objectifs">Objectifs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#materiel-necessaire">Matériel nécessaire</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gestion-des-interruptions">Gestion des interruptions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exercice">Exercice</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-de-l-accelerometre">Configuration de l'accéléromètre</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#driver-de-base">Driver de base</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-du-tap">Détection du tap</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interface-sysfs">Interface sysfs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#travail-a-rendre-et-criteres-d-evaluation">Travail à rendre et critères d'évaluation</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="laboratoire-6-developpement-de-drivers-kernel-space-iii">
+<span id="laboratoire6"></span><h1>Laboratoire 6 --- Développement de drivers kernel-space III<a class="headerlink" href="#laboratoire-6-developpement-de-drivers-kernel-space-iii" title="Lien vers cette rubrique">#</a></h1>
+<figure class="align-right">
+<a class="reference internal image-reference" href="../_images/logo_drv.png"><img alt="../_images/logo_drv.png" src="../_images/logo_drv.png" style="width: 6cm;" />
+</a>
+</figure>
+<section id="objectifs">
+<h2>Objectifs<a class="headerlink" href="#objectifs" title="Lien vers cette rubrique">#</a></h2>
+<ul class="simple">
+<li><p>Réaliser un driver pour un capteur sur un bus I2C</p></li>
+<li><p>Faire du traitement différé des interruptions</p></li>
+</ul>
+</section>
+<section id="materiel-necessaire">
+<h2>Matériel nécessaire<a class="headerlink" href="#materiel-necessaire" title="Lien vers cette rubrique">#</a></h2>
+<p>Ce laboratoire utilise le même environnement que le laboratoire précédent,
+qui peut donc être réutilisé.</p>
+</section>
+<section id="gestion-des-interruptions">
+<h2>Gestion des interruptions<a class="headerlink" href="#gestion-des-interruptions" title="Lien vers cette rubrique">#</a></h2>
+<p>Le mécanisme de gestion des interruptions utilisé jusqu'à présent peut s'avérer
+inefficace lorsqu'on a des tâches conséquentes à réaliser pour traiter une interruption.
+Par exemple, si on doit traiter une grande quantité de données suite à la pression d'un
+bouton, il est évident qu'on ne peut pas effectuer ces opérations dans la routine d'interruption.
+Il ne faut pas oublier non plus qu'il est <strong>interdit</strong> d'appeler dans une routine d'interruption des fonctions
+qui pourraient s'endormir.</p>
+<p>Vous avez vu pendant le cours plusieurs options pour repousser du travail à
+l'extérieur du code de la routine d'interruption --- en particulier la distinction entre
+<em>top half</em> (ou <em>hard irq</em>) et <em>bottom half</em>.
+Parmi ces approches, les threaded irq handlers et les workqueues sont normalement
+<strong>la</strong> façon de gérer les interruptions, sauf dans de cas très spécifiques.
+Dans le tableau ci-dessous, les différentes alternatives conseillées sont listées</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Durée IRQ handler</p></th>
+<th class="head"><p>Mécanisme conséillé</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>t &lt;= 10 us</p></td>
+<td><p>juste le hard irq</p></td>
+</tr>
+<tr class="row-odd"><td><p>10 us &lt; t &lt; 100 us</p></td>
+<td><p>threaded irq handlers / workqueues</p></td>
+</tr>
+<tr class="row-even"><td><p>t &gt;= 100 us, code non-critique</p></td>
+<td><p>threaded irq handlers / workqueues</p></td>
+</tr>
+<tr class="row-odd"><td><p>t &gt;= 100 us, code critique</p></td>
+<td><p>tasklets</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="exercice">
+<h2>Exercice<a class="headerlink" href="#exercice" title="Lien vers cette rubrique">#</a></h2>
+<p>Dans cet exercice nous allons réaliser un driver <em>from-scratch</em> pour l'accéléromètre
+qui se situe sur la DE1-SoC. <strong>Seul le code du dernier exercice devra être rendu</strong>.</p>
+<p>Comme nous pouvons le voir dans la figure suivante (extraite du <em>DE1-SoC User Manual</em>),
+l'accéléromètre se situe proche du SoC Cyclone V et est connecté à la partie HPS.</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="../_images/de1-soc.png"><img alt="../_images/de1-soc.png" src="../_images/de1-soc.png" style="width: 721.5px; height: 534.75px;" />
+</a>
+</figure>
+<p>Il s'agit d'un capteur ADXL345 fabriqué par Analog Devices.
+Il est connecté au processeur au moyen d'un bus I2C et d'une ligne d'interruption
+(toujours extrait du <em>DE1-SoC User Manual</em> Sec. 3.7.7):</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="../_images/adxl345-bus.png"><img alt="../_images/adxl345-bus.png" src="../_images/adxl345-bus.png" style="width: 672.75px; height: 234.75px;" />
+</a>
+</figure>
+<p>Vous trouverez le datasheet de ce capteur dans le dossier <code class="code highlight console docutils literal highlight-console"><span class="go">material/lab_06/</span></code>.
+La documentation de la DE1-SoC se situe toujours dans le dossier <code class="code highlight console docutils literal highlight-console"><span class="go">material/lab_01/</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Un ou plusieurs drivers existent déjà pour ce capteur dans le noyau Linux.
+Saurez-vous les trouver ? Quels frameworks sont utilisés ?</p>
+<p>Notre driver sera différent, mais il peut toujours être utile d'analyser des drivers
+existants pour comprendre leur fonctionnement.</p>
+</div>
+<section id="configuration-de-l-accelerometre">
+<h3>Configuration de l'accéléromètre<a class="headerlink" href="#configuration-de-l-accelerometre" title="Lien vers cette rubrique">#</a></h3>
+<p>Avant de commencer, il est nécessaire de faire quelques ajustements dans le devicetree
+utilisé durant les précédents laboratoires.
+Le noeud pour l'accéléromètre existe déjà mais il faut changer le numéro du bus
+ainsi que le flag dans la définition de l'interruption:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="go">&amp;i2c0 {</span>
+<span class="go">        status = &quot;okay&quot;;</span>
+
+<span class="go">        accel1: accelerometer@53 {</span>
+<span class="go">                compatible = &quot;adi,adxl345&quot;;</span>
+<span class="go">                reg = &lt;0x53&gt;;</span>
+
+<span class="go">                interrupt-parent = &lt;&amp;portc&gt;;</span>
+<span class="go">                interrupts = &lt;3 IRQ_TYPE_EDGE_RISING&gt;;</span>
+<span class="go">        };</span>
+<span class="go">};</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>D'après ce devicetree, quelle est l'adresse du capteur sur le bus I2C ?
+Cela correspond-t-il à l'information que vous trouvez dans le datasheet
+de l'ADXL345 ?</p>
+</div>
+<p>Recompilez le devicetree et redémarrer la carte avec le nouveau DTB.
+Référez vous au <a class="reference internal" href="../lab_02/lab_02.html#laboratoire2"><span class="std std-ref">Laboratoire 2 --- User-space Drivers</span></a> le cas échéant.</p>
+<p>Nous pouvons scanner les périphériques présents sur le bus I2C0
+au moyen de la commande <code class="code highlight console docutils literal highlight-console"><span class="go">i2cdetect -y -r 0</span></code>.
+Cela permet de tester si l'accéléromètre répond à l'adresse attendue:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@de1soclinux:~# </span>i2cdetect<span class="w"> </span>-y<span class="w"> </span>-r<span class="w"> </span><span class="m">0</span>
+<span class="go">    0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f</span>
+<span class="go">00:          -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">50: -- -- -- 53 -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --</span>
+<span class="go">70: -- -- -- -- -- -- -- --</span>
+</pre></div>
+</div>
+<p>Si le résultat est différent, il faut reprendre depuis le début et
+résoudre le problème avant de continuer.</p>
+</section>
+<section id="driver-de-base">
+<h3>Driver de base<a class="headerlink" href="#driver-de-base" title="Lien vers cette rubrique">#</a></h3>
+<p>Nous allons réaliser un premier driver basique qui permettra à l'utilisateur de faire
+une mesure d'accélération et d'obtenir le résultat.</p>
+<p>Dans un premier temps, il est nécessaire de se familiariser plus en détail avec le datasheet du capteur,
+et notamment la définition des registres.
+Les registres importants pour notre premier driver sont:</p>
+<ul class="simple">
+<li><p>DEVID</p></li>
+<li><p>POWER_CTL</p></li>
+<li><p>DATA_FORMAT</p></li>
+<li><p>DATAX0 à DATAZ1</p></li>
+</ul>
+<p>Vous avez vu en cours comment enregistrer un driver sur le bus I2C.
+Voici les méthodes dont vous aurez besoin pour lire et écrire un registre avec ce capteur:</p>
+<ul class="simple">
+<li><p><code class="code highlight c docutils literal highlight-c"><span class="n">i2c_smbus_read_byte_data</span><span class="p">()</span></code></p></li>
+<li><p><code class="code highlight c docutils literal highlight-c"><span class="n">i2c_smbus_write_byte_data</span><span class="p">()</span></code></p></li>
+</ul>
+<p>La lecture de plusieurs registres consécutifs se fait au moyen de la fonction
+<code class="code highlight c docutils literal highlight-c"><span class="n">i2c_smbus_read_i2c_block_data</span><span class="p">()</span></code>.</p>
+<p>Libre à vous de partir de zéro ou de vous inspirer d'un précédent laboratoire pour développer
+ce driver.</p>
+<div class="admonition-exercice-1 admonition">
+<p class="admonition-title"><strong>Exercice 1</strong></p>
+<p>Nous voulons réaliser un driver charactère auquel correspondra le <em>device node</em>
+<strong>/dev/adxl345</strong>.</p>
+<p>Dans la fonction <code class="code highlight c docutils literal highlight-c"><span class="n">probe</span><span class="p">()</span></code> de votre driver, il faudra réaliser au minimum les opérations
+suivantes:</p>
+<ul class="simple">
+<li><p>Lire le registre <code class="code highlight c docutils literal highlight-c"><span class="n">DEVID</span></code> et le comparer à la valeur donnée dans le datasheet
+pour s'assurer que l'on a affaire au bon capteur. Dans le cas contraire,
+le driver doit renvoyer l'erreur standard <code class="code highlight c docutils literal highlight-c"><span class="o">-</span><span class="n">ENODEV</span></code>.</p></li>
+<li><p>Configurer le registre <code class="code highlight c docutils literal highlight-c"><span class="n">DATA_FORMAT</span></code> afin d'avoir une plage de mesure de +/-4 g.
+Les autres bits de ce registre doivent rester à 0.</p></li>
+<li><p>Mettre le capteur en mode mesure au moyen du registre <code class="code highlight c docutils literal highlight-c"><span class="n">POWER_CTL</span></code>.</p></li>
+</ul>
+<p>Dans la fonction <code class="code highlight c docutils literal highlight-c"><span class="n">remove</span><span class="p">()</span></code> de votre driver, il faudra évidemment libérer les ressoures
+allouées par votre driver, mais pensez également à mettre le capteur en veille au moyen
+du registre <code class="code highlight c docutils literal highlight-c"><span class="n">POWER_CTL</span></code>. Ceci doit également être fait en cas d'erreur dans le
+<code class="code highlight c docutils literal highlight-c"><span class="n">probe</span><span class="p">()</span></code> pour éviter de laisser le capteur consommer pour rien.</p>
+<p>La lecture de <strong>/dev/adxl345</strong> doit renvoyer la dernière mesure effectuée par le capteur.
+Le driver doit donner la valeur mesurée pour chacun des 3 axes, convertie en <em>g</em> avec
+une résolution de 3 chiffres après la virgule. Attention, le capteur renvoie des valeurs signées !
+Et souvenez-vous de ce qu'il a été dit de l'utilisation des <em>float</em> dans un driver.</p>
+<p>Voici un exemple quand la carte est posée horizontalement puis verticalement:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/dev/adxl345
+<span class="go">X = +0.008; Y = -0.032; Z = +1.031</span>
+<span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/dev/adxl345
+<span class="go">X = +0.008; Y = +1.008; Z = -0.064</span>
+</pre></div>
+</div>
+<p>Pour la conversion entre les unités brutes du capteur et la valeur finale en <em>g</em>,
+une erreur de quelques pourcents (&lt; 5%) est tolérable afin de se simplifier la vie.</p>
+<p>Les autres opérations sur <strong>/dev/adxl345</strong> sont ignorées.</p>
+</div>
+</section>
+<section id="detection-du-tap">
+<h3>Détection du tap<a class="headerlink" href="#detection-du-tap" title="Lien vers cette rubrique">#</a></h3>
+<p>Nous allons à présent rajouter le support pour la détection du <em>tap</em> et du <em>double tap</em>
+dans notre driver. En effet, cet accéléromètre dispose d'une détection
+hardware des événements de &quot;tapotement&quot; et il est capable de générer une interruption
+sur sa ligne d'IRQ. Ceci évite de devoir lire en continu le capteur pour réaliser cette
+fonction en software, ce qui épargne la bande passante du bus et réduit la consommation
+d'énergie.</p>
+<p>Pour cela, un certain nombre de registres supplémentaires seront nécessaires:</p>
+<ul class="simple">
+<li><p>THRESH_TAP</p></li>
+<li><p>DUR</p></li>
+<li><p>Latent</p></li>
+<li><p>Window</p></li>
+<li><p>TAP_AXES</p></li>
+<li><p>ACT_TAP_STATUS</p></li>
+<li><p>INT_ENABLE</p></li>
+<li><p>INT_SOURCE</p></li>
+</ul>
+<p>En plus de la documentation de ces registres, le datasheet fourni
+une description de la détection du <em>tap</em> à la page 29 dans la
+section &quot;Applications information&quot;.</p>
+<div class="admonition-exercice-2 admonition">
+<p class="admonition-title"><strong>Exercice 2</strong></p>
+<p>La première étape est de configurer les seuils de détection du
+<em>tap</em> et <em>double tap</em> dans la méthode <code class="code highlight c docutils literal highlight-c"><span class="n">probe</span><span class="p">()</span></code> du driver.
+Pour cela, il est nécessaire d'écrire les registres <code class="code highlight c docutils literal highlight-c"><span class="n">THRESH_TAP</span></code>, <code class="code highlight c docutils literal highlight-c"><span class="n">DUR</span></code>, <code class="code highlight c docutils literal highlight-c"><span class="n">Latent</span></code> et <code class="code highlight c docutils literal highlight-c"><span class="n">Window</span></code>
+avec une valeur appropriée. Référez-vous à la section &quot;Applications information&quot; qui vous donnera
+quelques indications sur le choix de ces valeurs. Après, libre à vous d'expérimenter afin de trouver
+les meilleures paramètres.</p>
+<p>Il faut ensuite implémenter et configurer la routine de gestion d'interruption de notre driver,
+afin qu'elle soit appelée lorsque le capteur active sa ligne d'interruption.
+Le numéro d'interruption est donné par le champ <code class="code highlight c docutils literal highlight-c"><span class="n">irq</span></code> de la <code class="code highlight c docutils literal highlight-c"><span class="k">struct</span><span class="w"> </span><span class="nc">i2c_client</span></code>
+qui est passée en paramètre à la méthode <code class="code highlight c docutils literal highlight-c"><span class="n">probe</span><span class="p">()</span></code>.</p>
+<p>Ici vous devez utiliser une threaded IRQ afin que la gestion d'interruption se fasse
+dans le contexte d'un processus.
+Dans cette fonction, il faudra lire les registres <code class="code highlight c docutils literal highlight-c"><span class="n">ACT_TAP_STATUS</span></code> et <code class="code highlight c docutils literal highlight-c"><span class="n">INT_SOURCE</span></code> comme
+expliqué dans le datasheet afin de quittancer l'interruption.
+Le handler &quot;hard IRQ&quot; peut être vide (ou NULL).</p>
+<p>Finalement vous êtes prêt à activer les interruptions dans le capteur au moyen
+des registres <code class="code highlight c docutils literal highlight-c"><span class="n">TAP_AXES</span></code> et <code class="code highlight c docutils literal highlight-c"><span class="n">INT_ENABLE</span></code>. Pour l'instant vous pouvez faire
+cette étape dans la partie <code class="code highlight c docutils literal highlight-c"><span class="n">probe</span><span class="p">()</span></code> du driver et sélectionner l'axe de votre choix.
+Nous rajouterons une interface sysfs dans le prochain exercice pour
+permettre de configurer notre driver depuis le userspace.</p>
+<p>Pour tester cette partie, le plus simple sera d'ajouter un <code class="code highlight c docutils literal highlight-c"><span class="n">printk</span><span class="p">()</span></code> dans
+la routine de gestion d'interruption.
+Souvenez-vous que vous pouvez également lire le fichier <code class="code highlight console docutils literal highlight-console"><span class="go">/proc/interrupts</span></code>
+pour voir si la ligne d'interruption est effectivement appelée lorsque vous
+&quot;tapotez&quot; la carte.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pourquoi vous a-t-on demandé d'utiliser une routine d'interruption en contexte processus ?
+Que se passerait-il si cette routine était effectuée dans le handler &quot;hard IRQ&quot; et pourquoi ?
+Le plus simple est probablement de tester :-)</p>
+</div>
+</section>
+<section id="interface-sysfs">
+<h3>Interface sysfs<a class="headerlink" href="#interface-sysfs" title="Lien vers cette rubrique">#</a></h3>
+<p>Pour l'instant, les fonctions de notre driver sont hardcodées au moment du probe.
+Nous allons ajouer une interface sysfs afin de pouvoir configurer la détection du <em>tap</em>
+pendant le fonctionnement.</p>
+<div class="admonition-exercice-3 admonition">
+<p class="admonition-title"><strong>Exercice 3</strong></p>
+<p>Ajoutez l'interface sysfs suivante:</p>
+<ul class="simple">
+<li><p><code class="code highlight bash docutils literal highlight-bash">tap_axis</code> est un fichier en lecture / écriture qui permet de configurer l'axe
+sur lequel nous voulons faire la détection du <em>tap</em>. Les valeurs possibles
+sont &quot;x&quot;, &quot;y&quot; ou &quot;z&quot;. Par défaut l'axe &quot;z&quot; doit être utilisé.</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">tap_mode</code> est un fichier en lecture / écriture qui permet de configurer le
+type de détection souhaitée. Les valeurs possibles sont &quot;off&quot;, &quot;single&quot;, &quot;double&quot;, &quot;both&quot;.
+Par défaut &quot;off&quot; est sélectionné, c'est à dire qu'aucune interruption n'est générée
+par le capteur.</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">tap_wait</code> est un fichier en lecture seule. La lecture de ce fichier est bloquante
+jusqu'au prochain événement (<em>single tap</em> et/ou <em>double tap</em> en fonction de <code class="code highlight bash docutils literal highlight-bash">tap_type</code>).
+Le résultat de la lecture sera &quot;single&quot; ou &quot;double&quot; en fonction de l'événement qui
+a débloqué l'utilisateur.
+Pour simplifier, si un utilisateur est déjà en attente, la lecture de se fichier renverra
+immédiatement &quot;busy&quot;.</p></li>
+<li><p><code class="code highlight bash docutils literal highlight-bash">tap_count</code> est un fichier en lecture seule qui contient le nombre d'événements
+générés depuis l'insertion du driver.</p></li>
+</ul>
+<p>Voici un exemple d'utilisation de cette interface:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_axis
+<span class="go">z</span>
+<span class="gp">root@de1soclinux:~# </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;x&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_axis
+<span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_axis
+<span class="go">x</span>
+<span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_mode
+<span class="go">off</span>
+<span class="gp">root@de1soclinux:~# </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;single&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_mode
+<span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_wait
+<span class="gp gp-VirtualEnv">(...)</span>
+<span class="go">single</span>
+<span class="gp">root@de1soclinux:~# </span>cat<span class="w"> </span>/sys/devices/platform/soc/ffc04000.i2c/i2c-0/0-0053/tap_count
+<span class="go">1</span>
+</pre></div>
+</div>
+<p>Attention, tous les accès concurrents potentiels aux variables doivent être
+protégés correctement. Les accès concurrents au bus I2C n'ont pas besoin
+d'être protégés car ils sont sérialisés par le <em>bus infrastructure</em>.</p>
+</div>
+</section>
+</section>
+<section id="travail-a-rendre-et-criteres-d-evaluation">
+<h2>Travail à rendre et critères d'évaluation<a class="headerlink" href="#travail-a-rendre-et-criteres-d-evaluation" title="Lien vers cette rubrique">#</a></h2>
+<p>S'il est demandé d'écrire du code, ce code doit se trouver dans un fichier avec un nom permettant de clairement identifier l'exercice
+correspondant (p. ex. <em>ex&lt;n&gt;.c</em> où <em>&lt;n&gt;</em> correspond au numéro de l'exercice).
+Il n'est pas nécessaire de renommer les fichiers déjà existants.
+Si un exercice réutilise un fichier précédent, celui-ci doit être dupliqué pour le nouvel exercice, sauf indication contraire.</p>
+<p>Si le code a pour but d'être exécuté sur la DE1-SoC, il doit être compilé en &quot;compilation croisée&quot;,
+c.-à-d. en utilisant la toolchain mentionnée dans le <a class="reference internal" href="../lab_01/lab_01.html#laboratoire1"><span class="std std-ref">Laboratoire 1 --- Introduction</span></a>.</p>
+<p>N'oubliez pas de mettre votre prénom et nom !</p>
+<p>Les exercices sont à faire <strong>individuellement</strong>.
+Copier la solution d'un autre et changer le nom/l'ordre des variables n'est pas toléré.</p>
+<p>La date limite est celle communiquée dans l'annonce sur Moodle.
+Vous devez rendre une archive <code class="file docutils literal notranslate"><span class="pre">.tar.gz</span></code> contenant :</p>
+<ul class="simple">
+<li><p>le code source de vos solutions et tous les fichiers nécessaires,</p></li>
+<li><p>un fichier <code class="file docutils literal notranslate"><span class="pre">README.md</span></code>
+- les éventuels soucis rencontrés qui péjore le rendu
+- les choix d'implémentation &quot;spéciaux&quot; (si trop long pour expliquer en commentaire)</p></li>
+</ul>
+<p>Les laboratoires sont évalués à l'aide de questionnaire sur le contenu de ceux-ci.
+Pour avoir accès à ces évaluations, les laboratoires doivent être rendus à temps.
+Nous nous réservons le droit de tester les rendus pour vérifier qu'ils ont été faits.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../lab_05/lab_05.html"
+       title="page précédente">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">précédent</p>
+        <p class="prev-next-title">Laboratoire 5 --- Développement de drivers kernel-space II</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contenu
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#objectifs">Objectifs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#materiel-necessaire">Matériel nécessaire</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gestion-des-interruptions">Gestion des interruptions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exercice">Exercice</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configuration-de-l-accelerometre">Configuration de l'accéléromètre</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#driver-de-base">Driver de base</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#detection-du-tap">Détection du tap</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#interface-sysfs">Interface sysfs</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#travail-a-rendre-et-criteres-d-evaluation">Travail à rendre et critères d'évaluation</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+Par REDS institute
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, REDS institute.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
