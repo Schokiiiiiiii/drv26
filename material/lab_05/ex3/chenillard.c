@@ -15,6 +15,9 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/cdev.h>
+#include <linux/timer.h>
+#include <linux/completion.h>
+#include <linux/fs.h>
 
 /* Offsets for the registers detailed in the documentation */
 #define LED_REG_OFF        0x0000 // leds
@@ -24,6 +27,10 @@
 #define DOWN 1
 
 #define DEV_NAME "chaser"
+
+/*********************************/
+/*         Private data          */
+/*********************************/
 
 /**
  * @brief private structure for data shared accross functions accessible through plateform device
@@ -43,11 +50,24 @@ struct priv {
 	struct cdev cdev;
 	struct device *dev_file;
 
-	// shared data
+	// thread
 	struct task_struct *thread;
 	wait_queue_head_t worker_wait;
 	struct kfifo jobs;
+	uint32_t period_ms;
+	uint32_t nb_sequence_done;
+
+	// timer
+	struct timer_list timer;
+	struct completion sequence_done;
+	uint8_t current_job;
+	uint8_t current_step;
+	bool sequence_running;
 };
+
+/*********************************/
+/*         File operations       */
+/*********************************/
 
 static int chaser_file_open(struct inode *inode, struct file *filp);
 static ssize_t chaser_file_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos);
@@ -59,8 +79,107 @@ static const struct file_operations chaser_fops = {
 	.llseek = default_llseek, // Use default to enable seeking to 0
 };
 
+/*********************************/
+/*         Sysfs infos           */
+/*********************************/
+
+static ssize_t period_show(struct device *dev,
+								  struct device_attribute *attr,
+								  char *buf)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+
+	rc = sysfs_emit(buf, "%d\n", priv->period_ms);
+
+	return rc;
+}
+
+static ssize_t period_store(struct device *dev,
+								   struct device_attribute *attr,
+								   const char *buf,
+								   size_t count)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+
+	rc = kstrtouint(buf, 0, &priv->period_ms);
+	if (rc != 0) {
+		rc = -EINVAL;
+	} else {
+		rc = count;
+	}
+
+	return rc;
+}
+
+static ssize_t led_on_show(struct device *dev,
+                           struct device_attribute *attr,
+                           char *buf)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+
+	rc = sysfs_emit(buf, "%d\n", (priv->sequence_running ? priv->current_step - 1 : -1));
+
+	return rc;
+}
+
+static ssize_t nb_sequence_done_show(struct device *dev,
+							         struct device_attribute *attr,
+							         char *buf)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+
+	rc = sysfs_emit(buf, "%d\n", priv->nb_sequence_done);
+
+	return rc;
+}
+
+static ssize_t nb_sequence_waiting_show(struct device *dev,
+									 struct device_attribute *attr,
+									 char *buf)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+
+	rc = sysfs_emit(buf, "%d\n", kfifo_len(&priv->jobs) / sizeof(uint8_t));
+
+	return rc;
+}
+
+static ssize_t sequence_waiting_show(struct device *dev,
+									 struct device_attribute *attr,
+									 char *buf)
+{
+	int rc;
+	struct priv *priv = dev_get_drvdata(dev);
+	uint8_t waiting_jobs[16];
+	size_t len;
+
+	len = kfifo_out_peek(&priv->jobs, &waiting_jobs, 16);
+
+	for (size_t i = 0; i < len ; ++i) {
+		rc += sysfs_emit_at(buf, rc, "%s\n", (waiting_jobs[i] == UP ? "up" : "down"));
+	}
+
+	return rc;
+}
+
+static DEVICE_ATTR_RW(period); // show/store period
+static DEVICE_ATTR_RO(led_on); // show which led is currently on
+static DEVICE_ATTR_RO(nb_sequence_done); // show nb sequence done
+static DEVICE_ATTR_RO(nb_sequence_waiting); // show nb sequence waiting
+static DEVICE_ATTR_RO(sequence_waiting); // show sequence waiting
+
 // group sysfs attributes in a single sysfs group
 static struct attribute *chaser_attrs[] = {
+	&dev_attr_period.attr,
+	&dev_attr_led_on.attr,
+	&dev_attr_nb_sequence_done.attr,
+	&dev_attr_nb_sequence_waiting.attr,
+	&dev_attr_sequence_waiting.attr,
 	NULL,
 };
 
@@ -70,6 +189,10 @@ static const struct attribute_group chaser_attribute_group = {
 	.name = "chaser_sysfs",
 	.attrs = chaser_attrs,
 };
+
+/*********************************/
+/*         Driver functions      */
+/*********************************/
 
 /**
  * @brief Write an integer value to a register of the REDS-adder device.
@@ -88,14 +211,15 @@ static void chaser_write(struct priv const *const priv, int const reg_offset, in
 	iowrite32(value, (int *)priv->mem_ptr + (reg_offset / 4));
 }
 
-static ssize_t chaser_file_open(struct inode *inode, struct file *filp) {
+/**
+ * @brief Opens the driver virtual file and retrieve priv structure
+ */
+static int chaser_file_open(struct inode *inode, struct file *filp) {
 	struct priv *priv;
 
 	// Register private data back in filp
 	priv = container_of(inode->i_cdev, struct priv, cdev);
 	filp->private_data = priv;
-
-	dev_info(priv->dev, "Received an open call\n");
 
 	return nonseekable_open(inode, filp);
 }
@@ -103,7 +227,7 @@ static ssize_t chaser_file_open(struct inode *inode, struct file *filp) {
 /**
  * @brief Creates a new job for the worker depending on the command received
  */
-static int chaser_file_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos) {
+static ssize_t chaser_file_write(struct file *filp, const char __user *buf, size_t count, loff_t *ppos) {
 
 	struct priv *priv;
 	char tmp[5];
@@ -142,8 +266,6 @@ static int chaser_file_write(struct file *filp, const char __user *buf, size_t c
 		return -EFAULT;
 	tmp[len] = '\0';
 
-	dev_info(priv->dev, "buf:%s and count:%u", tmp, count);
-
 	if (strcmp(tmp, "up") == 0) {
 		kfifo_put(&priv->jobs, UP);
 	} else if (strcmp(tmp, "down") == 0) {
@@ -162,6 +284,29 @@ static int chaser_file_write(struct file *filp, const char __user *buf, size_t c
 	return count;
 }
 
+static void chaser_timer_callback(struct timer_list *t) {
+	struct priv *priv = container_of(t, struct priv, timer);
+	uint32_t led_value;
+
+	if (priv->current_step >= NB_LEDS) {
+		priv->sequence_running = false;
+		chaser_write(priv, LED_REG_OFF, 0);
+		complete(&priv->sequence_done);
+		return;
+	}
+
+	if (priv->current_job == UP)
+		led_value = 1 << priv->current_step;
+	else
+		led_value = 1 << (NB_LEDS - 1 - priv->current_step);
+
+	chaser_write(priv, LED_REG_OFF, led_value);
+
+	mod_timer(&priv->timer, jiffies + msecs_to_jiffies(priv->period_ms));
+
+	++priv->current_step;
+}
+
 /**
  * @brief Makes LEDs go brrrrrr when woken up
  */
@@ -174,33 +319,34 @@ static int chaser_worker(void *data) {
 
 	while (!kthread_should_stop()) {
 
+		// wait until job appears
 		wait_event_interruptible(priv->worker_wait, !kfifo_is_empty(&priv->jobs) || kthread_should_stop());
 		if (kthread_should_stop()) break;
-
 		if (!kfifo_get(&priv->jobs, &job)) {
 			dev_info(priv->dev, "Tried to get a job from empty fifo\n");
 			continue;
 		}
 
-		if (job == (uint8_t) UP) {
-			dev_info(priv->dev, "Processing up signal...\n");
-		} else if (job == (uint8_t) DOWN) {
-			dev_info(priv->dev, "Processing down signal...\n");
-		} else {
-			dev_info(priv->dev, "Tried to process an unknown signal\n");
-			continue;
-		}
+		// reinit the
+		reinit_completion(&priv->sequence_done);
 
-		for (uint8_t i = 0; i < NB_LEDS && !kthread_should_stop(); ++i) {
-			chaser_write(priv, LED_REG_OFF, job == UP ? 1 << i : 1 << (NB_LEDS - 1 - i));
-			msleep_interruptible(1000);
-		}
-		chaser_write(priv, LED_REG_OFF, 0);
+		priv->current_job = job;
+		priv->current_step = 0;
+		priv->sequence_running = true;
+
+		mod_timer(&priv->timer, jiffies);
+
+		if (!wait_for_completion_interruptible(&priv->sequence_done))
+			priv->nb_sequence_done++;
 	}
 
 	// inform everything went well
 	return 0;
 }
+
+/*********************************/
+/*         Driver probe          */
+/*********************************/
 
 /**
  * @brief Initializes the driver
@@ -227,6 +373,9 @@ static int chaser_probe(struct platform_device *pdev) {
 	// store data in plateform device for future access
 	platform_set_drvdata(pdev, priv);
 
+	// fix default period
+	priv->period_ms = 100;
+
 	// store device in our private data
 	priv->dev = &pdev->dev;
 
@@ -240,6 +389,12 @@ static int chaser_probe(struct platform_device *pdev) {
 		rc = -ENOMEM;
 		goto return_fail;
 	}
+
+	// init timer to play sequence
+	timer_setup(&priv->timer, chaser_timer_callback, 0);
+	init_completion(&priv->sequence_done);
+	priv->sequence_running = false;
+	priv->current_step = 0;
 
 	dev_info(&pdev->dev, "Main data for the private data initialized\n");
 
@@ -277,6 +432,7 @@ static int chaser_probe(struct platform_device *pdev) {
 
 	dev_info(&pdev->dev, "Set all registers to default values\n");
 
+	// create thread
 	priv->thread = kthread_run(chaser_worker, priv, "chaser_worker");
 	if (IS_ERR(priv->thread)) {
 		pr_err("Unable to create thread 1\n");
@@ -286,7 +442,7 @@ static int chaser_probe(struct platform_device *pdev) {
 
 	dev_info(&pdev->dev, "Launched worker\n");
 
-	// get major and minor from kerneldestroy_sysfs_group
+	// get major and minor from kernel
 	rc = alloc_chrdev_region(
 		&priv->dev_num, /* Will contain the assigned numbers */
 		0,				/* First minor we request */
@@ -294,13 +450,14 @@ static int chaser_probe(struct platform_device *pdev) {
 		DEV_NAME);		/* Name of the device */
 	if (rc != 0) {
 		dev_err(&pdev->dev, "Cannot get a major/minor number pair\n");
-		goto destroy_sysfs_group;
+		goto free_thread;
 	}
 
 	// create a class in /sys/class
 	priv->dev_class = class_create(THIS_MODULE, DEV_NAME);
 	if (IS_ERR(priv->dev_class)) {
 		dev_err(&pdev->dev, "Failed to allocate device's class\n");
+		rc = PTR_ERR(priv->dev_class);
 		goto free_chrdev;
 	}
 
@@ -340,14 +497,21 @@ free_cdev:
 free_chrdev:
 	unregister_chrdev_region(priv->dev_num, 1);
 free_thread:
+	complete(&priv->sequence_done);
+	wake_up_interruptible(&priv->worker_wait);
 	kthread_stop(priv->thread);
 destroy_sysfs_group:
 	sysfs_remove_group(&pdev->dev.kobj, &chaser_attribute_group);
 free_kfifo:
+	del_timer_sync(&priv->timer);
 	kfifo_free(&priv->jobs);
 return_fail:
 	return rc;
 }
+
+/*********************************/
+/*         Driver remove         */
+/*********************************/
 
 /**
  * @brief clears all data and removes the driver
@@ -377,9 +541,13 @@ static int chaser_remove(struct platform_device *pdev) {
 
 	// free thread
 	if (priv->thread) {
-		kthread_stop(priv->thread);
+		complete(&priv->sequence_done);
 		wake_up_interruptible(&priv->worker_wait);
+		kthread_stop(priv->thread);
 	}
+
+	// delete timer
+	del_timer_sync(&priv->timer);
 
 	// remove sysfs group
 	sysfs_remove_group(&pdev->dev.kobj, &chaser_attribute_group);
@@ -394,6 +562,10 @@ static int chaser_remove(struct platform_device *pdev) {
 
 	return 0;
 }
+
+/*********************************/
+/*         Platform driver       */
+/*********************************/
 
 static const struct of_device_id chaser_driver_id[] = {
 	{ .compatible = "drv2026" },
@@ -413,6 +585,10 @@ static struct platform_driver chaser_driver = {
 };
 
 module_platform_driver(chaser_driver);
+
+/*********************************/
+/*         Module infos          */
+/*********************************/
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("REDS");
