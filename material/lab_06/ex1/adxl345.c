@@ -73,34 +73,59 @@ static int adxl345_open(struct inode *inode, struct file *filp)
 static ssize_t adxl345_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
 {
         struct priv *priv;
-        uint16_t data[3];
+        uint8_t data[6];
+        int8_t x_raw, y_raw, z_raw;
+        int x_mg, y_mg, z_mg;
+        char kbuf[128];
+        int len;
         int rc;
 
         // retrieve private data from file
         priv = filp->private_data;
+        if (!priv)
+                return -EINVAL;
+
+        // offset is not allowed because not a real file
+        if (*offset > 0)
+                return 0;
 
         // read data from register
         rc = i2c_smbus_read_i2c_block_data(priv->client, ADXL345_REG_DATAX0, 6, (uint8_t *)data);
         if (rc < 0)
-        {
                 return rc;
-        }
         if (rc != 6)
-        {
                 return -EIO;
-        }
+
+        // put data back in order ([1] is high and [0] is low)
+        x_raw = (int8_t)((data[1] << 8) | data[0]);
+        y_raw = (int8_t)((data[3] << 8) | data[2]);
+        z_raw = (int8_t)((data[5] << 8) | data[4]);
+
+        // take mg to get a better approximation (divide by 256 = 1g)
+        x_mg = x_raw * 1000 / 256;
+        y_mg = y_raw * 1000 / 256;
+        z_mg = z_raw * 1000 / 256;
+
+        // format output
+        len = scnprintf(kbuf, sizeof(kbuf),
+                        "X = %+d.%03d; Y = %+d.%03d; Z = %+d.%03d\n",
+                        x_mg / 1000, abs(x_mg % 1000),
+                        y_mg / 1000, abs(y_mg % 1000),
+                        z_mg / 1000, abs(z_mg % 1000));
+
+        // check len
+        if (count < len)
+                return -EINVAL;
 
         // copy to user
-        rc = copy_to_user(buf, data, 6);
-        if (rc)
-        {
+        if (copy_to_user(buf, kbuf, len))
                 return -EFAULT;
-        }
 
+        // update offset
         *offset += count;
 
-        // return count for success
-        return count;
+        // return number of bytes copied
+        return len;
 }
 
 static const struct file_operations adxl345_fops =
