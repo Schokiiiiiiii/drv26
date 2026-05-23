@@ -12,17 +12,23 @@
 #include <linux/uaccess.h>
 
 #define ADXL345_REG_DEVID        0x00
+
+// tapping registers
+#define ADXL345_REG_THRESH_TAP   0X1D
+#define ADXL345_REG_DUR          0x21
+#define ADXL345_REG_LATENT       0X22
+#define ADXL345_REG_WINDOW       0X23
+
+// data registers
 #define ADXL345_REG_POWER_CTL    0x2D
 #define ADXL345_REG_DATA_FORMAT  0x31
 #define ADXL345_REG_DATAX0       0x32
 #define ADXL345_REG_DATAY0       0x34
 #define ADXL345_REG_DATAZ0       0x36
 
-#define ADXL345_DEVID_VALUE      0b11100101 // 0xE5
-
+#define ADXL345_DEVID_VALUE        0b11100101 // 0xE5
 #define ADXL345_POWER_MEASURE_MASK 0b00001000
-
-#define ADXL345_RANGE_4G         0x01
+#define ADXL345_RANGE_4G           0x01
 
 #define DEV_NAME "adxl345"
 
@@ -69,12 +75,11 @@ static int adxl345_open(struct inode *inode, struct file *filp)
         return nonseekable_open(inode, filp);
 }
 
-// TODO handle read to format output through scnprintf then copy with copy_to_user
 static ssize_t adxl345_read(struct file *filp, char __user *buf, size_t count, loff_t *offset)
 {
         struct priv *priv;
         uint8_t data[6];
-        int8_t x_raw, y_raw, z_raw;
+        s16 x_raw, y_raw, z_raw;
         int x_mg, y_mg, z_mg;
         char kbuf[128];
         int len;
@@ -97,14 +102,14 @@ static ssize_t adxl345_read(struct file *filp, char __user *buf, size_t count, l
                 return -EIO;
 
         // put data back in order ([1] is high and [0] is low)
-        x_raw = (int8_t)((data[1] << 8) | data[0]);
-        y_raw = (int8_t)((data[3] << 8) | data[2]);
-        z_raw = (int8_t)((data[5] << 8) | data[4]);
+        x_raw = (s16)((data[1] << 8) | data[0]);
+        y_raw = (s16)((data[3] << 8) | data[2]);
+        z_raw = (s16)((data[5] << 8) | data[4]);
 
-        // take mg to get a better approximation (divide by 256 = 1g)
-        x_mg = x_raw * 1000 / 256;
-        y_mg = y_raw * 1000 / 256;
-        z_mg = z_raw * 1000 / 256;
+        // take mg to get a better approximation (divide by 128 = 1g)
+        x_mg = x_raw * 1000 / 128;
+        y_mg = y_raw * 1000 / 128;
+        z_mg = z_raw * 1000 / 128;
 
         // format output
         len = scnprintf(kbuf, sizeof(kbuf),
@@ -122,7 +127,7 @@ static ssize_t adxl345_read(struct file *filp, char __user *buf, size_t count, l
                 return -EFAULT;
 
         // update offset
-        *offset += count;
+        *offset += len;
 
         // return number of bytes copied
         return len;
@@ -133,7 +138,7 @@ static const struct file_operations adxl345_fops =
         .owner  = THIS_MODULE,
         .open   = adxl345_open,
         .read   = adxl345_read,
-        .llseek = default_llseek, // Use default to enable seeking to 0
+        .llseek = no_llseek, // cannot seek since it's single read
 };
 
 /*********************/
@@ -247,8 +252,9 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
                                            &client->dev,					/* Parent device */
                                            priv->dev_num,				/* Major/minor numbers */
                                            priv,						/* Pointer to private data */
-                                           "adxl345-%d",
-                                           0);							/* Device file's name */
+                                           DEV_NAME
+                                           /*"adxl345-%d",
+                                           0*/);							/* Device file's name */
         if (IS_ERR(priv->dev_file)) {
                 dev_err(&client->dev, "Failed to create device file\n");
                 goto delete_cdev;
