@@ -12,12 +12,33 @@
 #include <linux/uaccess.h>
 
 // device
-#define ADXL345_REG_DEVID        0x00
-#define ADXL345_DEVID_VALUE      0xE5
+#define ADXL345_REG_DEVID               0x00
+#define ADXL345_DEVID_VALUE             0xE5
+
+// tapping
+#define ADXL345_REG_THRESH_TAP          0x1D // threshold when tap gets detected
+#define ADXL345_VALUE_THRESH_TAP        0x38 // 62.5mg/LSB
+#define ADXL345_REG_DUR                 0x21 // max duration of the tap
+#define ADXL345_VALUE_DUR               0x18 // 625us/LSB
+#define ADXL345_REG_LATENT              0x22 // waiting time until time window for second tap
+#define ADXL345_VALUE_LATENT            0x50 // 1.25ms/LSB
+#define ADXL345_REG_WINDOW              0x23 // window to have a second tap
+#define ADXL345_VALUE_WINDOW            0xA0 // 1.25ms/Lsb
+#define ADXL345_REG_TAP_AXES            0x2A
+#define ADXL345_TAP_ENABLE              0x07 // 0b00000111 (x/y/z)
+#define ADXL345_REG_ACT_TAP_STATUS      0x2B
+#define ADXL345_TAP_X_SOURCE            0x04
+#define ADXL345_TAP_Y_SOURCE            0x02
+#define ADXL345_TAP_Z_SOURCE            0x01
 
 // power/interrupts
 #define ADXL345_REG_POWER_CTL           0x2D
 #define ADXL345_POWER_MEASURE_MASK      0b00001000
+#define ADXL345_REG_INT_ENABLE          0x2E
+#define ADXL345_VALUE_INT_ENABLE        0x60 // enable single/double tap
+#define ADXL345_REG_INT_SOURCE          0x30
+#define ADXL345_SINGLE_TAP_INT_SOURCE   0x40
+#define ADXL345_DOUBLE_TAP_INT_SOURCE   0x20
 
 // data
 #define ADXL345_REG_DATA_FORMAT         0x31
@@ -38,6 +59,8 @@ struct priv
         struct cdev cdev;
         struct class *dev_class;
         struct device *dev_file;
+
+        int irq;
 };
 
 /*********************/
@@ -138,6 +161,46 @@ static const struct file_operations adxl345_fops =
 };
 
 /*********************/
+/*       IRQ         */
+/*********************/
+
+static irqreturn_t adxl345_irq_threaded(int irq, void *dev_id)
+{
+        struct priv *priv = dev_id;
+        int int_source;
+        int tap_status;
+
+        // read status of tapping to retrieve which axis detected the tap
+        tap_status = i2c_smbus_read_byte_data(priv->client, ADXL345_REG_ACT_TAP_STATUS);
+        if (tap_status < 0)
+                return IRQ_NONE;
+
+        // read int source to know if it's a single or double tap (clears while reading)
+        int_source = i2c_smbus_read_byte_data(priv->client, ADXL345_REG_INT_SOURCE);
+        if (int_source < 0)
+                return IRQ_NONE;
+
+        // print to show which tape was detected
+        if (int_source & ADXL345_DOUBLE_TAP_INT_SOURCE) {
+                dev_info(&priv->client->dev, "Double tap detected\n");
+        } else if (int_source & ADXL345_SINGLE_TAP_INT_SOURCE) {
+                dev_info(&priv->client->dev, "Single tap detected\n");
+        } else {
+                return IRQ_NONE;
+        }
+
+        // print to show which axis detected the tap
+        if (tap_status & ADXL345_TAP_X_SOURCE)
+                dev_info(&priv->client->dev, "Tap on X axis\n");
+        if (tap_status & ADXL345_TAP_Y_SOURCE)
+                dev_info(&priv->client->dev, "Tap on Y axis\n");
+        if (tap_status & ADXL345_TAP_Z_SOURCE)
+                dev_info(&priv->client->dev, "Tap on Z axis\n");
+
+        return IRQ_HANDLED;
+}
+
+/*********************/
 /*    MODULE         */
 /*********************/
 static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_id *device_id)
@@ -149,15 +212,13 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
         // read devid
         devid = i2c_smbus_read_byte_data(client, ADXL345_REG_DEVID);
-        if (devid < 0)
-        {
+        if (devid < 0) {
                 rc = devid;
                 goto power_ctl_off;
         }
 
         // check if it's the correct one
-        if (devid != ADXL345_DEVID_VALUE)
-        {
+        if (devid != ADXL345_DEVID_VALUE) {
                 rc = -ENODEV;
                 goto power_ctl_off;
         }
@@ -166,17 +227,13 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
 
         // measure range +/-4g (other bytes = 0)
         rc = i2c_smbus_write_byte_data(client, ADXL345_REG_DATA_FORMAT, ADXL345_RANGE_4G);
-        if (rc < 0)
-        {
+        if (rc < 0) {
                 goto power_ctl_off;
         }
 
-        dev_info(&client->dev, "Fixed measure range to +/-4g\n");
-
         // retrieve power ctl
         power_ctl = i2c_smbus_read_byte_data(client, ADXL345_REG_POWER_CTL);
-        if (power_ctl < 0)
-        {
+        if (power_ctl < 0) {
                 rc = power_ctl;
                 goto power_ctl_off;
         }
@@ -184,17 +241,39 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
         // change mode to measure
         power_ctl |= ADXL345_POWER_MEASURE_MASK;
         rc = i2c_smbus_write_byte_data(client, ADXL345_REG_POWER_CTL, power_ctl);
-        if (rc < 0)
-        {
+        if (rc < 0) {
                 goto power_ctl_off;
         }
 
-        dev_info(&client->dev, "Fixed power ctl measure to 1\n");
+        // write threshold for tapping detection
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_THRESH_TAP, ADXL345_VALUE_THRESH_TAP);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
+        // write duration for tapping
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_DUR, ADXL345_VALUE_DUR);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
+        // write latency for tapping
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_LATENT, ADXL345_VALUE_LATENT);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
+        // write window for tapping
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_WINDOW, ADXL345_VALUE_WINDOW);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
+        dev_info(&client->dev, "Fixed registers inside adxl345\n");
 
         // allocate private data
         priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
-        if (priv == NULL)
-        {
+        if (priv == NULL) {
                 goto power_ctl_off;
         }
 
@@ -204,11 +283,42 @@ static int adxl345_i2c_probe(struct i2c_client *client, const struct i2c_device_
         // store data in client device for future access
         i2c_set_clientdata(client, (void *)priv);
 
+        // retrieve irq number
+        priv->irq = client->irq;
+        if (priv->irq <= 0) {
+                rc = -EINVAL;
+                goto power_ctl_off;
+        }
+
+        // register isr
+        rc = devm_request_threaded_irq(&client->dev,
+                                       priv->irq,
+                                       NULL,
+                                       adxl345_irq_threaded,
+                                       IRQF_ONESHOT,
+                                       "adxl345_irq_handler",
+                                       priv);
+        if (rc != 0) {
+                goto power_ctl_off;
+        }
+
+        // enable tap axes
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_TAP_AXES, ADXL345_TAP_ENABLE);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
+        // enable interrupts for tapping
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_INT_ENABLE, ADXL345_VALUE_INT_ENABLE);
+        if (rc < 0) {
+                goto power_ctl_off;
+        }
+
         // create sysfs group entry
         rc = sysfs_create_group(&client->dev.kobj, &adxl345_attribute_group);
         if (rc) {
                 dev_err(&client->dev, "Failed to create a sysfs group\n");
-                goto power_ctl_off;
+                goto interrupts_off;;
         }
 
         // get major and minor from kernel
@@ -268,6 +378,9 @@ free_chrdev:
         unregister_chrdev_region(priv->dev_num, 1);
 destroy_sysfs_group:
         sysfs_remove_group(&client->dev.kobj, &adxl345_attribute_group);
+interrupts_off:
+        i2c_smbus_write_byte_data(client, ADXL345_REG_INT_ENABLE, 0x00);
+        i2c_smbus_read_byte_data(client, ADXL345_REG_INT_SOURCE); // clear pending interrupts
 power_ctl_off:
         i2c_smbus_write_byte_data(client, ADXL345_REG_POWER_CTL, 0x00);
 
@@ -288,6 +401,14 @@ static void adxl345_i2c_remove(struct i2c_client *client)
         class_destroy(priv->dev_class);
         unregister_chrdev_region(priv->dev_num, 1);
         sysfs_remove_group(&client->dev.kobj, &adxl345_attribute_group);
+
+        // disable interrupts
+        rc = i2c_smbus_write_byte_data(client, ADXL345_REG_INT_ENABLE, 0x00);
+        if (rc < 0)
+                dev_warn(&client->dev, "Failed to disable interrupts\n");
+
+        // clear pending interrupts
+        i2c_smbus_read_byte_data(client, ADXL345_REG_INT_SOURCE);
 
         // power ctl off
         rc = i2c_smbus_write_byte_data(client, ADXL345_REG_POWER_CTL, 0x00);
